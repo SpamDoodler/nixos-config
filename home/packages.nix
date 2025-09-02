@@ -8,6 +8,7 @@
       texlive.combined.scheme-full
       mpv
       ani-cli
+      glow
       nodePackages_latest.peerflix
       osu-lazer-bin
       inkscape
