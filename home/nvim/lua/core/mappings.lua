@@ -13,3 +13,4 @@ vim.keymap.set('v', 'k', 'gk', opts)
 
 -- Plugin shortcuts
 vim.keymap.set('n', '<F3>', ':NvimTreeToggle<CR>', opts)
+vim.keymap.set("n", "<leader>e", vim.diagnostic.open_float)

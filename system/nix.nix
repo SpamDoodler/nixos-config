@@ -16,7 +16,7 @@
     settings = {
       auto-optimise-store = true;
       max-jobs = 8;
-      download-buffer-size = 1048576;
+      download-buffer-size = 524288000;
       substituters = lib.mkDefault [
         "https://cache.nixos.org"
       ];

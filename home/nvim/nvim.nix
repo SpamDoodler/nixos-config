@@ -6,6 +6,7 @@
     clang-tools
     pyright
     rust-analyzer
+    texlab
   ];
   programs.neovim = {
 		enable = true;
@@ -29,15 +30,18 @@
         mason-lspconfig-nvim
         nvim-lspconfig
         nvim-cmp
+        cmp-path
         cmp-nvim-lsp
         vim-flake8
         vim-clang-format
         clangd_extensions-nvim
+        nvim-lint
+        none-ls-nvim
+        vimtex
 		  ]);
 		# extraConfig = (builtins.readFile ./init.vim) ;
     extraLuaConfig = ''
       ${builtins.readFile ./lua/core/options.lua}
-      ${builtins.readFile ./lua/core/plugins.lua}
       ${builtins.readFile ./lua/core/autocommands.lua}
       ${builtins.readFile ./lua/core/mappings.lua}
       ${builtins.readFile ./lua/setup/gui.lua}

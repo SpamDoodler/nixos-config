@@ -19,5 +19,6 @@
       gap-full
       lie
       rainloop-standard
+      pre-commit
 	  ];
 }

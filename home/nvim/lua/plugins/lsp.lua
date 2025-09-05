@@ -37,3 +37,6 @@ lspconfig.rust_analyzer.setup{
     }
 }
 
+-- Latex LSP
+lspconfig.texlab.setup {}
+
