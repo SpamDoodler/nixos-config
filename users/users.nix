@@ -12,6 +12,7 @@
       "video" 
       "dialout"
       "libvirtd" 
+      "podman"
       "docker" 
       "gamemode"];
     uid = 1000;

@@ -5,11 +5,12 @@
     ./nix.nix
     ./boot.nix
     ./networking.nix
+    ./locals.nix
     ./powerManagement.nix
     ./programs.nix
     ./services.nix
     ./systemd.nix
-    ./locals.nix
+    ./virtualisation.nix
   ];
   
   # Set your time zone.

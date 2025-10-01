@@ -21,4 +21,6 @@
       rainloop-standard
       pre-commit
 	  ];
+
+    programs.firefox.enable = true;
 }
