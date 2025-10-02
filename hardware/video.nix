@@ -5,6 +5,5 @@
   hardware.graphics.extraPackages = with pkgs; [ 
     vulkan-tools 
     vulkan-loader 
-    amdvlk
   ];
 }
