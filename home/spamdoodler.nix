@@ -13,6 +13,7 @@
       ./shell.nix
       ./starship.nix
       ./sway/sway.nix
+      ./yazi.nix
     ];
     
 	  home.stateVersion = "23.11";
