@@ -40,6 +40,9 @@
     lm_sensors
     feh
     gcc
+    cmake
+    cxxopts
+    pkg-config
     fzf
     libinput
     trash-cli
