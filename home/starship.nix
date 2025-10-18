@@ -1,10 +1,12 @@
-{config, pkgs, ...}:
-
 {
-    programs.starship = {
+  config,
+  pkgs,
+  ...
+}: {
+  programs.starship = {
     enable = true;
     settings = {
-        format = "$shlvl$shell$username$hostname$nix_shell$git_branch$git_commit$git_state$git_status$directory$jobs$cmd_duration$character";
+      format = "$shlvl$shell$username$hostname$nix_shell$git_branch$git_commit$git_state$git_status$directory$jobs$cmd_duration$character";
       add_newline = false;
       character.success_symbol = "[>](bold green)";
       character.error_symbol = "[>](bold red)";

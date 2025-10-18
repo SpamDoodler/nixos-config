@@ -1,6 +1,8 @@
-{ config, pkgs, ... }:
-
 {
+  config,
+  pkgs,
+  ...
+}: {
   programs.git = {
     enable = true;
 
@@ -14,8 +16,7 @@
       core.sshCommand = "ssh -i ~/.ssh/id_rsa_spamdoodler";
       init.defaultBranch = "main";
 
-      includeIf."gitdir:~/Uni/".path = 
-        "${config.xdg.configHome}/git/config-uni";
+      includeIf."gitdir:~/Uni/".path = "${config.xdg.configHome}/git/config-uni";
     };
   };
 

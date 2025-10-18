@@ -1,8 +1,9 @@
 # /etc/nixos/custom-rtw89.nix
-
-{ config, lib, ... }:
-
 {
+  config,
+  lib,
+  ...
+}: {
   options = {
     # Define the options for rtw89_pci module
     hardware.enableRtw89Pci = lib.mkEnableOption "Enable rtw89_pci module";
@@ -31,7 +32,7 @@
 
   config = lib.mkIf config.hardware.enableRtw89Pci {
     # Add the module to the kernel modules list
-    boot.kernelModules = [ "rtw89_pci" ];
+    boot.kernelModules = ["rtw89_pci"];
 
     # Specify module options using boot.kernelParams
     boot.kernelParams = [
@@ -41,4 +42,3 @@
     ];
   };
 }
-

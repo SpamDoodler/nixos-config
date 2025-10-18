@@ -1,6 +1,9 @@
-{ config, pkgs, lib, ... }:
-
 {
+  config,
+  pkgs,
+  lib,
+  ...
+}: {
   programs.nix-ld.enable = true;
   programs.ccache.enable = true;
   nix = {
@@ -20,13 +23,12 @@
       substituters = lib.mkDefault [
         "https://cache.nixos.org"
       ];
-      trusted-public-keys = 
-        [ "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=" ];
-      extra-sandbox-paths = [ "/var/cache/ccache" ];
+      trusted-public-keys = ["cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="];
+      extra-sandbox-paths = ["/var/cache/ccache"];
     };
   };
 
-    nixpkgs.config.permittedInsecurePackages = [
-	    "electron-24.8.6"
-    ];
+  nixpkgs.config.permittedInsecurePackages = [
+    "electron-24.8.6"
+  ];
 }

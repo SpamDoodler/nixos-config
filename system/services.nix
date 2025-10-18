@@ -1,6 +1,8 @@
-{ config, pkgs, ... }:
-
-{ 
+{
+  config,
+  pkgs,
+  ...
+}: {
   # Gamemode
   programs.gamemode.enable = true;
 
@@ -10,7 +12,7 @@
 
   # Enable printing
   services.printing.enable = true;
-  services.printing.drivers = with pkgs; [ gutenprint ];
+  services.printing.drivers = with pkgs; [gutenprint];
   services.avahi = {
     enable = true;
     nssmdns4 = true;
@@ -30,57 +32,57 @@
     RateLimitInterval=30s
     RateLimitBurst=1000
   '';
-  
+
   services.tor = {
-		  enable = true; 
+    enable = true;
 
-		  # Disable GeoIP to prevent the Tor client from estimating the locations of Tor nodes it connects to
-		  enableGeoIP = false;
+    # Disable GeoIP to prevent the Tor client from estimating the locations of Tor nodes it connects to
+    enableGeoIP = false;
 
-		  # Enable Torsocks for transparent proxying of applications through Tor
-		  torsocks.enable = true;
+    # Enable Torsocks for transparent proxying of applications through Tor
+    torsocks.enable = true;
 
-		  # Enable the Tor client
-		  client = {
-		    enable = true;
-		  };
+    # Enable the Tor client
+    client = {
+      enable = true;
+    };
 
-		  # Enable and configure the Tor relay
-		  relay.enable = false;
+    # Enable and configure the Tor relay
+    relay.enable = false;
 
-		  # Configure Tor settings
-		  settings = {
-		    Nickname = "SpamDoodler";  
-		    ContactInfo = "doodler.spammail@gmail.com"; 
+    # Configure Tor settings
+    settings = {
+      Nickname = "SpamDoodler";
+      ContactInfo = "doodler.spammail@gmail.com";
 
-		    # Bandwidth settings
-		    MaxAdvertisedBandwidth = "100 MB";  
-		    BandWidthRate = "50 MB";  
-		    RelayBandwidthRate = "50 MB";  
-		    RelayBandwidthBurst = "100 MB"; 
+      # Bandwidth settings
+      MaxAdvertisedBandwidth = "100 MB";
+      BandWidthRate = "50 MB";
+      RelayBandwidthRate = "50 MB";
+      RelayBandwidthBurst = "100 MB";
 
-		    # Restrict exit nodes to a specific country (use the appropriate country code)
-		    ExitNodes = "{ch} StrictNodes 1";  
-		    
-		    # Reject all exit traffic
-		    ExitPolicy = ["reject *:*"];  
+      # Restrict exit nodes to a specific country (use the appropriate country code)
+      ExitNodes = "{ch} StrictNodes 1";
 
-		    # Performance and security settings
-		    CookieAuthentication = true;  
-		    AvoidDiskWrites = 1; 
-		    HardwareAccel = 1;  
-		    SafeLogging = 1; 
-		    NumCPUs = 3;   
+      # Reject all exit traffic
+      ExitPolicy = ["reject *:*"];
 
-		    # Network settings
-		    ORPort = [443];
-		  };
-		};
+      # Performance and security settings
+      CookieAuthentication = true;
+      AvoidDiskWrites = 1;
+      HardwareAccel = 1;
+      SafeLogging = 1;
+      NumCPUs = 3;
+
+      # Network settings
+      ORPort = [443];
+    };
+  };
 
   # Operating a Snowflake proxy helps others circumvent censorship. Safe to run.
   services.snowflake-proxy = {
-	  enable = true;
-	  capacity = 10;
+    enable = true;
+    capacity = 10;
   };
 
   # Enable the OpenSSH daemon.
@@ -94,9 +96,9 @@
 
   services.xserver.enable = false;
 
-# TODO: Grafana Monitoring Tool.
+  # TODO: Grafana Monitoring Tool.
 
-  # Audio 
+  # Audio
   security.rtkit.enable = true;
   services.pipewire = {
     enable = true;
@@ -109,5 +111,11 @@
   security.polkit.enable = true;
   programs.light.enable = true;
 
- 
+  services.resolved = {
+    enable = true;
+    dnssec = "true";
+    domains = ["~."];
+    fallbackDns = ["1.1.1.1#one.one.one.one" "1.0.0.1#one.one.one.one"];
+    dnsovertls = "true";
+  };
 }

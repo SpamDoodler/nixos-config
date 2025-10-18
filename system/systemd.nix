@@ -1,16 +1,19 @@
-{ config, lib, pkgs, ... }:
-
 {
+  config,
+  lib,
+  pkgs,
+  ...
+}: {
   systemd = {
     settings.Manager = {
       DefaultLimitNOFILE = "1048576";
       DefaultLimitNPROC = "65535";
-      DefaultTasksMax   = "49152";
+      DefaultTasksMax = "49152";
     };
-    
+
     services.sshd.serviceConfig = {
       TimeoutStartSec = "15s";
-      TimeoutStopSec  = "10s";
+      TimeoutStopSec = "10s";
     };
 
     oomd.enable = true;

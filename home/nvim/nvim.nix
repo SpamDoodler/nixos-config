@@ -1,6 +1,8 @@
-{config, pkgs, ... }:
-
 {
+  config,
+  pkgs,
+  ...
+}: {
   home.packages = with pkgs; [
     black
     clang-tools
@@ -9,37 +11,36 @@
     texlab
   ];
   programs.neovim = {
-		enable = true;
+    enable = true;
 
-    # Aliases 
-		viAlias = true;
-		vimAlias = true;
-		vimdiffAlias = true;
+    # Aliases
+    viAlias = true;
+    vimAlias = true;
+    vimdiffAlias = true;
 
     # Plugins
-		plugins =
-		  (with pkgs.vimPlugins; [
-		    nvim-tree-lua
-		    nightfox-nvim
-		    lualine-nvim
-        cmp_luasnip
-		    nvim-treesitter.withAllGrammars
-		    bufferline-nvim
-        mason-nvim
-        mason-null-ls-nvim
-        mason-lspconfig-nvim
-        nvim-lspconfig
-        nvim-cmp
-        cmp-path
-        cmp-nvim-lsp
-        vim-flake8
-        vim-clang-format
-        clangd_extensions-nvim
-        nvim-lint
-        none-ls-nvim
-        vimtex
-		  ]);
-		# extraConfig = (builtins.readFile ./init.vim) ;
+    plugins = with pkgs.vimPlugins; [
+      nvim-tree-lua
+      nightfox-nvim
+      lualine-nvim
+      cmp_luasnip
+      nvim-treesitter.withAllGrammars
+      bufferline-nvim
+      mason-nvim
+      mason-null-ls-nvim
+      mason-lspconfig-nvim
+      nvim-lspconfig
+      nvim-cmp
+      cmp-path
+      cmp-nvim-lsp
+      vim-flake8
+      vim-clang-format
+      clangd_extensions-nvim
+      nvim-lint
+      none-ls-nvim
+      vimtex
+    ];
+    # extraConfig = (builtins.readFile ./init.vim) ;
     extraLuaConfig = ''
       ${builtins.readFile ./lua/core/options.lua}
       ${builtins.readFile ./lua/core/autocommands.lua}
@@ -53,5 +54,5 @@
       ${builtins.readFile ./lua/plugins/nvim-tree.lua}
       ${builtins.readFile ./lua/plugins/vimtex.lua}
     '';
-	};
+  };
 }

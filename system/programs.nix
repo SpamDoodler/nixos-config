@@ -1,6 +1,8 @@
-{ config, pkgs, ... }:
-
-{ 
+{
+  config,
+  pkgs,
+  ...
+}: {
   nixpkgs.config.allowUnfree = true;
 
   programs.steam = {
@@ -62,9 +64,8 @@
     zip
     imagemagick
   ];
-  
+
   environment.variables.EDITOR = "nvim";
 
   # TODO: zsh integration and alias for bat, eza, fzf, etc.
-
 }

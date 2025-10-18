@@ -1,6 +1,8 @@
-{ config, pkgs, ... }:
-
-{ 
+{
+  config,
+  pkgs,
+  ...
+}: {
   fonts = {
     enableDefaultPackages = true;
     packages = with pkgs; [
@@ -23,29 +25,28 @@
       lmmath
       (pkgs.stdenv.mkDerivation {
         name = "BrownPro";
-      	src = ./BrownPro;
-	installPhase = ''
-          mkdir -p $out/share/fonts
-	  cp -r $src/*.ttf $out/share/fonts/
-	'';
-       })
+        src = ./BrownPro;
+        installPhase = ''
+                 mkdir -p $out/share/fonts
+          cp -r $src/*.ttf $out/share/fonts/
+        '';
+      })
     ];
     fontconfig = {
       defaultFonts = {
-	monospace = [
+        monospace = [
           "Source Code Pro"
-	  "Noto Sans Mono SC"
-	];
-	sansSerif = [
-	  "Noto Sans CJK SC"
-	  "Source Code Pro"
-	];
-	serif = [
-	  "Noto Serif CJK SC"
-	  "Source Code Pro"
-	];
+          "Noto Sans Mono SC"
+        ];
+        sansSerif = [
+          "Noto Sans CJK SC"
+          "Source Code Pro"
+        ];
+        serif = [
+          "Noto Serif CJK SC"
+          "Source Code Pro"
+        ];
       };
     };
   };
-
 }

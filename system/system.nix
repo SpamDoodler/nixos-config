@@ -1,6 +1,8 @@
-{ config, pkgs, ... }:
-
 {
+  config,
+  pkgs,
+  ...
+}: {
   imports = [
     ./nix.nix
     ./boot.nix
@@ -12,7 +14,7 @@
     ./systemd.nix
     ./virtualisation.nix
   ];
-  
+
   # Set your time zone.
   time.timeZone = "Europe/Berlin";
   system.stateVersion = "23.05"; # Did you read the comment?

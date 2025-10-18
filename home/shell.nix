@@ -1,6 +1,8 @@
-{ config, pkgs, ... }:
-
 {
+  config,
+  pkgs,
+  ...
+}: {
   programs.zsh = {
     enable = true;
     autosuggestion.enable = true;
@@ -22,7 +24,7 @@
     enable = true;
   };
 
-  programs.bash.enable = true;  # Optional fallback
+  programs.bash.enable = true; # Optional fallback
 
   programs.zoxide = {
     enable = true;

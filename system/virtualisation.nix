@@ -1,8 +1,10 @@
-{ config, pkgs, ...}:
-
 {
- # Virtualisation
-  virtualisation = { 
+  config,
+  pkgs,
+  ...
+}: {
+  # Virtualisation
+  virtualisation = {
     libvirtd.enable = true;
     docker = {
       enable = true;
@@ -18,5 +20,5 @@
     dockerCompat = false;
   };
 
-  environment.systemPackages = [ pkgs.distrobox ];
+  environment.systemPackages = [pkgs.distrobox];
 }
