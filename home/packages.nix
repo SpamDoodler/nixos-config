@@ -12,13 +12,13 @@
     ani-cli
     nodePackages_latest.peerflix
     osu-lazer-bin
-    ghostty
     inkscape
     rawtherapee
     libreoffice-qt
     hunspell
     hunspellDicts.en-us
     tor-browser
+    tdf
     gap-full
     lie
     rainloop-standard
@@ -26,7 +26,4 @@
   ];
 
   programs.firefox.enable = true;
-  # terminal  -- ghostty
-  # wm        -- hyprland
-  # pdfreader -- tdf
 }

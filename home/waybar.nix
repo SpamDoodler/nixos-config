@@ -2,17 +2,15 @@
   config,
   pkgs,
   ...
-}: 
-
-{
-   programs.waybar = {
+}: {
+  programs.waybar = {
     enable = true;
     settings = {
       mainBar = {
         layer = "top";
         position = "top";
         modules-left = [
-          "sway/workspaces" 
+          "sway/workspaces"
           "sway/mode"
           "hyprland/workspaces"
         ];
@@ -55,7 +53,7 @@
       * {
         border: none;
         font-family: "Iosevka Nerd Font";
-        font-size: 10px;
+        font-size: 14px;
       }
       window#waybar {
         background: rgba(40, 44, 72, 0.9);
@@ -81,5 +79,4 @@
       }
     '';
   };
-
 }

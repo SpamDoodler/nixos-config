@@ -11,8 +11,10 @@
   imports = [
     ./alacritty.nix
     ./github.nix
+    ./ghostty.nix
     ./hyprland/hyprland.nix
     ./mouse.nix
+    #./niri.nix
     ./nvim/nvim.nix
     ./packages.nix
     ./shell.nix

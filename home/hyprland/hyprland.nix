@@ -5,6 +5,10 @@
 }: let
   hyprExtraConfig = builtins.readFile ./hyprland.conf;
 in {
+  home.packages = with pkgs; [
+    hyprpaper
+  ];
+
   wayland.windowManager.hyprland = {
     enable = true;
     systemd.variables = ["--all"];
@@ -27,11 +31,34 @@ in {
         "$mod SHIFT, UP, movewindow, u"
         "$mod SHIFT, RIGHT, movewindow, r"
 
+        # Creates a group
+        "$mod, W, togglegroup"
+
+        # Moving focus on the next or previous window inside the group
+        "$mod, bracketleft, changegroupactive, b"
+        "$mod, bracketright, changegroupactive, f"
+
+        # Swapping the active window with the next or previous in a group
+        "$mod SHIFT, bracketleft, movegroupwindow, b"
+        "$mod SHIFT, bracketright, movegroupwindow, f"
+
+        # Moving non-tabbed window inside tabbed group by direction
+        "$mod SHIFT CONTROL, LEFT, moveintogroup, l"
+        "$mod SHIFT CONTROL, RIGHT, moveintogroup, r"
+        "$mod SHIFT CONTROL, UP, moveintogroup, u"
+        "$mod SHIFT CONTROL, DOWN, moveintogroup, d"
+
+        # Moving tabbed window out from the group
+        "$mod SHIFT ALT, LEFT, moveoutofgroup, l"
+        "$mod SHIFT ALT, RIGHT, moveoutofgroup, r"
+        "$mod SHIFT ALT, UP, moveoutofgroup, u"
+        "$mod SHIFT ALT, DOWN, moveoutofgroup, d"
+
         # Resize
-        "$mod, h, resizeactive, -10 0"
-        "$mod, l, resizeactive, 10 0"
-        "$mod, k, resizeactive, 0 -10"
-        "$mod, j, resizeactive, 0 10"
+        "$mod, LEFT, resizeactive, -10 0"
+        "$mod, DOWN, resizeactive, 10 0"
+        "$mod, UP, resizeactive, 0 -10"
+        "$mod, RIGHT, resizeactive, 0 10"
 
         # Reload
         "$mod SHIFT, R, exec, hyprctl reload"
@@ -41,8 +68,8 @@ in {
         ", XF86MonBrightnessUp, exec, light -A 10"
 
         # Volume
-        ", XF86AudioRaiseVolume, exec, wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 5%-"
-        ", XF86AudioLowerVolume, exec, wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 5%+"
+        ", XF86AudioRaiseVolume, exec, wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 5%+"
+        ", XF86AudioLowerVolume, exec, wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 5%-"
         ", XF86AudioMute, exec, wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"
 
         # Apps and scripts
@@ -88,10 +115,10 @@ in {
           "workspaces, 1, 2, fast"
         ];
       };
-      
+
       # Monitor
       monitor = [
-        "eDP-1,1920x1080@60,0x0,1.25"
+        "eDP-1,1920x1080@60,0x0,1"
       ];
 
       decoration = {
@@ -101,8 +128,9 @@ in {
 
       exec-once = [
         "waybar"
+        "hyprpaper"
         "fcitx5 -d"
-        # "bash -c \"$HOME/nixos/scripts/wallpapers.sh\""
+        "bash -c \"$HOME/nixos/scripts/hyprback.sh\""
       ];
 
       general = {

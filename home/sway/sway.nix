@@ -33,4 +33,4 @@ in {
     };
     extraConfig = swayExtraConfig;
   };
- }
+}
