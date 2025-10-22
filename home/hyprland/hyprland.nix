@@ -2,22 +2,23 @@
   config,
   pkgs,
   ...
-}: let
-  hyprExtraConfig = builtins.readFile ./hyprland.conf;
-in {
+}: 
+
+{
   home.packages = with pkgs; [
     hyprpaper
+    wofi
   ];
 
   wayland.windowManager.hyprland = {
     enable = true;
     systemd.variables = ["--all"];
-
+    plugins = [pkgs.hyprlandPlugins.hy3];
     settings = {
       "$mod" = "SUPER";
 
       bind = [
-        "$mod SHIFT, q, killactive"
+        "$mod SHIFT, Q, killactive"
 
         # Move focus
         "$mod, LEFT, movefocus, l"
@@ -34,31 +35,31 @@ in {
         # Creates a group
         "$mod, W, togglegroup"
 
-        # Moving focus on the next or previous window inside the group
-        "$mod, bracketleft, changegroupactive, b"
-        "$mod, bracketright, changegroupactive, f"
+        # Focus navigation between tabs
+        "$mod, LEFT, changegroupactive, b"
+        "$mod, RIGHT, changegroupactive, f"
+        "$mod, UP, changegroupactive, b"
+        "$mod, DOWN, changegroupactive, f"
 
-        # Swapping the active window with the next or previous in a group
-        "$mod SHIFT, bracketleft, movegroupwindow, b"
-        "$mod SHIFT, bracketright, movegroupwindow, f"
+        # Move window into/out of tab groups (i3-like)
+        "$mod SHIFT, LEFT, moveintogroup, l"
+        "$mod SHIFT, RIGHT, moveintogroup, r"
+        "$mod SHIFT, UP, moveintogroup, u"
+        "$mod SHIFT, DOWN, moveintogroup, d"
 
-        # Moving non-tabbed window inside tabbed group by direction
-        "$mod SHIFT CONTROL, LEFT, moveintogroup, l"
-        "$mod SHIFT CONTROL, RIGHT, moveintogroup, r"
-        "$mod SHIFT CONTROL, UP, moveintogroup, u"
-        "$mod SHIFT CONTROL, DOWN, moveintogroup, d"
-
-        # Moving tabbed window out from the group
-        "$mod SHIFT ALT, LEFT, moveoutofgroup, l"
-        "$mod SHIFT ALT, RIGHT, moveoutofgroup, r"
-        "$mod SHIFT ALT, UP, moveoutofgroup, u"
-        "$mod SHIFT ALT, DOWN, moveoutofgroup, d"
+        # Optional: move window within group tab order (like i3 move left/right)
+        "$mod SHIFT, LEFT, movegroupwindow, b"
+        "$mod SHIFT, RIGHT, movegroupwindow, f"
 
         # Resize
-        "$mod, LEFT, resizeactive, -10 0"
-        "$mod, DOWN, resizeactive, 10 0"
-        "$mod, UP, resizeactive, 0 -10"
-        "$mod, RIGHT, resizeactive, 0 10"
+        "$mod CTRL, LEFT, resizeactive, -10 0"
+        "$mod CTRL, DOWN, resizeactive, 10 0"
+        "$mod CTRL, UP, resizeactive, 0 -10"
+        "$mod CTRL, RIGHT, resizeactive, 0 10"
+
+        # --- Force split direction like i3 ---
+        "$mod, H, layoutmsg, orientationhorizontal"
+        "$mod, V, layoutmsg, orientationvertical"
 
         # Reload
         "$mod SHIFT, R, exec, hyprctl reload"
@@ -73,8 +74,10 @@ in {
         ", XF86AudioMute, exec, wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"
 
         # Apps and scripts
+        "$mod, D, exec, wofi --show drun --location top --width 100%"
         "$mod, RETURN, exec, ghostty"
         "$mod, C, exec, google-chrome-stable"
+        "$mod SHIFT, C, exec, firefox"
         "$mod, O, exec, bash -c \"nmcli radio wifi | grep -q 'enabled' && nmcli radio wifi off || nmcli radio wifi on\""
         "$mod, X, exec, bash -c \"$HOME/nixos/scripts/waybar.sh\""
 
@@ -127,6 +130,7 @@ in {
       };
 
       exec-once = [
+        "hyprpm reload -n"
         "waybar"
         "hyprpaper"
         "fcitx5 -d"
@@ -138,12 +142,29 @@ in {
         gaps_in = 0;
         gaps_out = 0;
         no_border_on_floating = true;
+        layout="hy3";
       };
 
       group = {
-        auto_group = false;
+        auto_group = true;
       };
     };
-    # extraConfig = hyprExtraConfig;
   };
+
+  xdg.configFile."wofi/style.css".text = ''
+    window {
+      border-radius: 0;
+      background-color: rgba(30, 30, 46, 0.95);
+      color: #ffffff;
+    }
+
+    #entry:selected {
+        background-color: rgba(80, 80, 100, 0.7);
+    }
+
+    #input {
+        background-color: rgba(50, 50, 70, 0.9);
+        color: white;
+        border: none;
+    } '';
 }

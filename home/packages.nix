@@ -23,6 +23,7 @@
     lie
     rainloop-standard
     pre-commit
+    signal-desktop
   ];
 
   programs.firefox.enable = true;

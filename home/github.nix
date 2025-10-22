@@ -7,11 +7,11 @@
     enable = true;
 
     # This is the default user
-    userName = "spamdoodler";
-    userEmail = "raphael.senghaas@gmx.de";
 
     # Conditional inculdes
-    extraConfig = {
+    settings = {
+      user.name = "spamdoodler";
+      user.email = "raphael.senghaas@gmx.de";
       core.editor = "nvim";
       core.sshCommand = "ssh -i ~/.ssh/id_rsa_spamdoodler";
       init.defaultBranch = "main";
