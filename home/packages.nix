@@ -24,6 +24,8 @@
     rainloop-standard
     pre-commit
     signal-desktop
+    ueberzugpp
+    imagemagick
   ];
 
   programs.firefox.enable = true;

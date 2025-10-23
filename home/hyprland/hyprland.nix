@@ -10,6 +10,18 @@
     wofi
   ];
 
+  services.hyprpaper = {
+    enable = true;
+    settings = {
+      preload = [
+        "${config.home.homeDirectory}/Pictures/anime_wallpapers/sfw/default.jpeg"
+      ];
+      wallpaper = [
+        "eDP-1,${config.home.homeDirectory}/Pictures/anime_wallpapers/sfw/default.jpeg"
+      ];
+    };
+  };
+
   wayland.windowManager.hyprland = {
     enable = true;
     systemd.variables = ["--all"];
@@ -19,60 +31,46 @@
 
       bind = [
         "$mod SHIFT, Q, killactive"
-
-        # Move focus
-        "$mod, LEFT, movefocus, l"
-        "$mod, DOWN, movefocus, d"
-        "$mod, UP, movefocus, u"
-        "$mod, RIGHT, movefocus, r"
-
-        # Move window
-        "$mod SHIFT, LEFT, movewindow, l"
-        "$mod SHIFT, DOWN, movewindow, d"
-        "$mod SHIFT, UP, movewindow, u"
-        "$mod SHIFT, RIGHT, movewindow, r"
-
-        # Creates a group
-        "$mod, W, togglegroup"
-
-        # Focus navigation between tabs
-        "$mod, LEFT, changegroupactive, b"
-        "$mod, RIGHT, changegroupactive, f"
-        "$mod, UP, changegroupactive, b"
-        "$mod, DOWN, changegroupactive, f"
-
-        # Move window into/out of tab groups (i3-like)
-        "$mod SHIFT, LEFT, moveintogroup, l"
-        "$mod SHIFT, RIGHT, moveintogroup, r"
-        "$mod SHIFT, UP, moveintogroup, u"
-        "$mod SHIFT, DOWN, moveintogroup, d"
-
-        # Optional: move window within group tab order (like i3 move left/right)
-        "$mod SHIFT, LEFT, movegroupwindow, b"
-        "$mod SHIFT, RIGHT, movegroupwindow, f"
-
-        # Resize
-        "$mod CTRL, LEFT, resizeactive, -10 0"
-        "$mod CTRL, DOWN, resizeactive, 10 0"
-        "$mod CTRL, UP, resizeactive, 0 -10"
-        "$mod CTRL, RIGHT, resizeactive, 0 10"
-
-        # --- Force split direction like i3 ---
-        "$mod, H, layoutmsg, orientationhorizontal"
-        "$mod, V, layoutmsg, orientationvertical"
-
+    
+        # Move focus with hy3
+        "$mod, LEFT, hy3:movefocus, l"
+        "$mod, DOWN, hy3:movefocus, d"
+        "$mod, UP, hy3:movefocus, u"
+        "$mod, RIGHT, hy3:movefocus, r"
+        
+        # Move window with hy3
+        "$mod SHIFT, LEFT, hy3:movewindow, l"
+        "$mod SHIFT, DOWN, hy3:movewindow, d"
+        "$mod SHIFT, UP, hy3:movewindow, u"
+        "$mod SHIFT, RIGHT, hy3:movewindow, r"
+        
+        # Layout modes (i3-like)
+        "$mod, W, hy3:changegroup, toggletab"    # Tabbed layout
+        "$mod, E, hy3:changegroup, togglesplit"  # Toggle h/v split
+        "$mod, S, hy3:changegroup, opposite"     # Stacking (alternative)
+        
+        # Force split direction for next window
+        "$mod, H, hy3:makegroup, h, tab"  # Horizontal split
+        "$mod, V, hy3:makegroup, v, tab"  # Vertical split
+        
+        # Resize with hy3
+        "$mod CTRL, LEFT, resizeactive, -50 0"
+        "$mod CTRL, RIGHT, resizeactive, 50 0"
+        "$mod CTRL, UP, resizeactive, 0 -50"
+        "$mod CTRL, DOWN, resizeactive, 0 50"
+        
         # Reload
         "$mod SHIFT, R, exec, hyprctl reload"
-
+        
         # Brightness
         ", XF86MonBrightnessDown, exec, light -U 10"
         ", XF86MonBrightnessUp, exec, light -A 10"
-
+        
         # Volume
         ", XF86AudioRaiseVolume, exec, wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 5%+"
         ", XF86AudioLowerVolume, exec, wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 5%-"
         ", XF86AudioMute, exec, wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"
-
+        
         # Apps and scripts
         "$mod, D, exec, wofi --show drun --location top --width 100%"
         "$mod, RETURN, exec, ghostty"
@@ -80,11 +78,12 @@
         "$mod SHIFT, C, exec, firefox"
         "$mod, O, exec, bash -c \"nmcli radio wifi | grep -q 'enabled' && nmcli radio wifi off || nmcli radio wifi on\""
         "$mod, X, exec, bash -c \"$HOME/nixos/scripts/waybar.sh\""
-
+        "$mod, B, exec, bash -c \"$HOME/nixos/scripts/set_wallpapers.sh\""
+        
         # Fullscreen
         "SUPER, F, fullscreenstate, 2 -1"
         "SUPER SHIFT, F, fullscreen"
-
+        
         # Workspace
         "$mod, 1, workspace, 1"
         "$mod, 2, workspace, 2"
@@ -105,7 +104,7 @@
         "$mod SHIFT, 7, movetoworkspace, 7"
         "$mod SHIFT, 8, movetoworkspace, 8"
         "$mod SHIFT, 9, movetoworkspace, 9"
-        "$mod SHIFT, 0, movetoworkspace, 10"
+        "$mod SHIFT, 0, movetoworkspace, 10"      
       ];
       animations = {
         enabled = true;
@@ -132,7 +131,7 @@
       exec-once = [
         "hyprpm reload -n"
         "waybar"
-        "hyprpaper"
+        # "hyprpaper"
         "fcitx5 -d"
         "bash -c \"$HOME/nixos/scripts/hyprback.sh\""
       ];
