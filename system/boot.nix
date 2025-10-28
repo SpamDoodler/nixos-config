@@ -6,7 +6,9 @@
   # Bootloader.
   boot = {
     kernelModules = ["kvm" "kvm_intel" "amdgpu" "kmv_amd"];
-    kernelPackages = pkgs.linuxPackages_latest;
+       
+    kernelPackages = pkgs.linuxPackagesFor pkgs.linuxKernel.kernels.linux_testing;
+
     kernel.sysctl = {
       "vm.swappiness" = 10;
       "vm.vfs_cache_pressure" = 50;

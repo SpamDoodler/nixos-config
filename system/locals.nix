@@ -17,14 +17,30 @@
     LC_TELEPHONE = "de_DE.UTF-8";
     LC_TIME = "de_DE.UTF-8";
   };
-
+  
   i18n.inputMethod = {
     enable = true;
-    type = "fcitx5";
-    fcitx5.addons = with pkgs; [
-      fcitx5-mozc
-      fcitx5-gtk
-      fcitx5-chinese-addons
-    ];
+    # type = "fcitx5";
+    package = pkgs.fcitx5;
+    fcitx5 = {
+      waylandFrontend = true;
+      addons = with pkgs; [
+        fcitx5-mozc
+        fcitx5-gtk
+        fcitx5-configtool
+        fcitx5-chinese-addons
+      ];
+    };
   };
+
+  environment.etc."xdg/fcitx5/profile".text = ''
+    [Groups/0]
+    Name=Default
+    Default Layout=us
+    DefaultIM=pinyin
+    EnabledIMList=pinyin
+
+    [GroupOrder]
+    0=Default
+  '';
 }

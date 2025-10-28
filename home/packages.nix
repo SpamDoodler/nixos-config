@@ -26,6 +26,7 @@
     signal-desktop
     ueberzugpp
     imagemagick
+    seafile-client
   ];
 
   programs.firefox.enable = true;
