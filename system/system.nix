@@ -4,9 +4,10 @@
   ...
 }: {
   imports = [
-    ./nix.nix
     ./boot.nix
+    ./environment.nix
     ./networking.nix
+    ./nix.nix
     ./locals.nix
     ./powerManagement.nix
     ./programs.nix

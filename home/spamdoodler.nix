@@ -10,6 +10,7 @@
 
   imports = [
     ./alacritty.nix
+    ./dropbox.nix
     ./github.nix
     ./ghostty.nix
     ./hyprland/hyprland.nix

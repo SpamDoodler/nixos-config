@@ -16,8 +16,8 @@
       source-han-sans
       source-han-serif
       source-code-pro
-      noto-fonts-emoji
-      noto-fonts-extra
+      noto-fonts-color-emoji
+      noto-fonts
       pango
       hack-font
       jetbrains-mono
