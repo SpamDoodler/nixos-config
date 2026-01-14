@@ -12,12 +12,16 @@
       tree = "eza -T --icons";
       rm = "trash";
       cat = "bat";
+      ai = "aider --model deepseek/deepseek-chat";
     };
     oh-my-zsh = {
       enable = true;
       plugins = ["git" "z" "sudo" "colored-man-pages"];
       theme = "agnoster";
     };
+    initContent = ''
+        export DEEPSEEK_API_KEY=$(cat ~/.deepseek_key)
+    '';
   };
 
   programs.bat = {

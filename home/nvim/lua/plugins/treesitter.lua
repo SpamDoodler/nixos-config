@@ -2,7 +2,7 @@ require("nvim-treesitter.install").install_dir = vim.fn.stdpath("data") .. "/par
 
 
 -- Treesitter configuration
-require("nvim-treesitter.configs").setup {
+require("nvim-treesitter").setup {
   -- Enable syntax highlighting
   highlight = {
     enable = true,

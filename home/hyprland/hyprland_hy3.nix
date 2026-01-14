@@ -1,6 +1,8 @@
 {
   config,
   pkgs,
+  hyprland,
+  hy3,
   ...
 }: 
 
@@ -27,8 +29,8 @@
     enable = true;
     systemd.variables = ["--all"];
 
-    # Use hyprstack instead of hy3
     plugins = [
+      hy3.packages.x86_64-linux.hy3
     ];
 
     settings = {
@@ -37,32 +39,52 @@
       bind = [
         "$mod SHIFT, Q, killactive"
 
-        # --- Focus movement (i3-style) ---
-        "$mod, LEFT, movefocus, l"
-        "$mod, DOWN, movefocus, d"
-        "$mod, UP, movefocus, u"
-        "$mod, RIGHT, movefocus, r"
+        # --- hy3: Focus movement (vim keys + arrows) ---
+        "$mod, H, hy3:movefocus, l"
+        "$mod, L, hy3:movefocus, r"
+        "$mod, K, hy3:movefocus, u"
+        "$mod, J, hy3:movefocus, d"
+        "$mod, LEFT, hy3:movefocus, l"
+        "$mod, RIGHT, hy3:movefocus, r"
+        "$mod, UP, hy3:movefocus, u"
+        "$mod, DOWN, hy3:movefocus, d"
 
-        # --- Move window (i3-style) ---
-        "$mod SHIFT, LEFT, movewindow, l"
-        "$mod SHIFT, DOWN, movewindow, d"
-        "$mod SHIFT, UP, movewindow, u"
-        "$mod SHIFT, RIGHT, movewindow, r"
+        # --- hy3: Move window (vim keys + arrows) ---
+        "$mod SHIFT, H, hy3:movewindow, l"
+        "$mod SHIFT, L, hy3:movewindow, r"
+        "$mod SHIFT, K, hy3:movewindow, u"
+        "$mod SHIFT, J, hy3:movewindow, d"
+        "$mod SHIFT, LEFT, hy3:movewindow, l"
+        "$mod SHIFT, RIGHT, hy3:movewindow, r"
+        "$mod SHIFT, UP, hy3:movewindow, u"
+        "$mod SHIFT, DOWN, hy3:movewindow, d"
 
-        # --- Layout switching (hyprstack) ---
-        # Tabbed layout
-        # "$mod, W, plugin:hyprstack:cyclestack, tab"
-
+        # --- hy3: Container management (i3-style) ---
         # Split horizontal/vertical
-        "$mod, H, layoutmsg, orientation h"
-        "$mod, V, layoutmsg, orientation v"
+        "$mod, B, hy3:makegroup, h"  # horizontal split
+        "$mod, V, hy3:makegroup, v"  # vertical split
+        
+        # Toggle split orientation
+        "$mod, E, hy3:changegrouporient, togglesplit"
+        
+        # Tabbed layout (i3-style)
+        "$mod, W, hy3:makegroup, tab"
+        
+        # Change focus between tiling/floating
+        "$mod, Space, hy3:changefocus, raise"
+        
+        # Toggle floating
+        "$mod SHIFT, Space, togglefloating"
 
-        # Toggle split orientation (similar to hy3: togglesplit)
-        "$mod, E, layoutmsg, togglesplit"
-
-        # Switch stack order (similar to stacking)
+        # --- hy3: Tab navigation ---
+        "$mod, A, hy3:changefocus, left, visible"   # previous tab
+        "$mod, S, hy3:changefocus, right, visible"  # next tab
 
         # --- Resize active window ---
+        "$mod CTRL, H, resizeactive, -50 0"
+        "$mod CTRL, L, resizeactive, 50 0"
+        "$mod CTRL, K, resizeactive, 0 -50"
+        "$mod CTRL, J, resizeactive, 0 50"
         "$mod CTRL, LEFT, resizeactive, -50 0"
         "$mod CTRL, RIGHT, resizeactive, 50 0"
         "$mod CTRL, UP, resizeactive, 0 -50"
@@ -87,7 +109,7 @@
         "$mod SHIFT, C, exec, firefox"
         "$mod, O, exec, bash -c \"nmcli radio wifi | grep -q 'enabled' && nmcli radio wifi off || nmcli radio wifi on\""
         "$mod, X, exec, bash -c \"$HOME/nixos/scripts/waybar.sh\""
-        "$mod, B, exec, bash -c \"$HOME/nixos/scripts/set_wallpapers.sh\""
+        "$mod SHIFT, B, exec, bash -c \"$HOME/nixos/scripts/set_wallpapers.sh\""
 
         # Fullscreen
         "SUPER, F, fullscreenstate, 2 -1"
@@ -145,12 +167,36 @@
       ];
 
       general = {
-        border_size = 0;
-        gaps_in = 0;
-          gaps_out = 0;
-          # no_border_on_floating = true;
+        border_size = 2;
+        gaps_in = 5;
+        gaps_out = 10;
+        "col.active_border" = "rgba(88888888)";
+        "col.inactive_border" = "rgba(00000088)";
+        no_border_on_floating = false;
+      };
+
+      # hy3 plugin settings
+      plugin = {
+        hy3 = {
+          # no_gaps_when_only = false;  # set to true for i3 gaps behavior
+          
+          tabs = {
+            height = 15;
+            padding = 5;
+            render_text = true;
+            "col.active" = "rgba(88888888)";
+            "col.inactive" = "rgba(00000088)";
+            "col.urgent" = "rgba(ff0000ff)";
+          };
+          
+          autotile = {
+            enable = true;
+            trigger_width = 800;
+            trigger_height = 500;
+          };
         };
       };
+    };
   };
 
   xdg.configFile."wofi/style.css".text = ''
@@ -168,5 +214,6 @@
         background-color: rgba(50, 50, 70, 0.9);
         color: white;
         border: none;
-    } '';
+    }
+  '';
 }

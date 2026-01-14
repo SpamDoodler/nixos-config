@@ -4,13 +4,14 @@
   ...
 }: {
   home.packages = with pkgs; [
+    aider-chat
     swaybg
     oh-my-zsh
     google-chrome
     texlive.combined.scheme-full
     mpv
     ani-cli
-    nodePackages_latest.peerflix
+    peerflix-server
     osu-lazer-bin
     inkscape
     rawtherapee
