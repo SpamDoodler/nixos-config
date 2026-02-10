@@ -41,7 +41,7 @@
       vimtex
     ];
     # extraConfig = (builtins.readFile ./init.vim) ;
-    extraLuaConfig = ''
+    initLua = ''
       ${builtins.readFile ./lua/core/options.lua}
       ${builtins.readFile ./lua/core/autocommands.lua}
       ${builtins.readFile ./lua/core/mappings.lua}

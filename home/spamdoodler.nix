@@ -18,7 +18,7 @@
     #./niri.nix
     ./nvim/nvim.nix
     ./packages.nix
-    ./patches.nix
+    #./patches.nix
     ./shell.nix
     ./starship.nix
     ./sway/sway.nix
