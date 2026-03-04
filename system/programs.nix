@@ -12,8 +12,7 @@
   };
 
   programs.zsh.enable = true;
-
-  environment.systemPackages = with pkgs; [
+   environment.systemPackages = with pkgs; [
     unzip
     p7zip
     eza
