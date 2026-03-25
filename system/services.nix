@@ -109,7 +109,6 @@
 
   # Wayland related
   security.polkit.enable = true;
-  programs.light.enable = true;
 
   services.resolved = {
     enable = false;

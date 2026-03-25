@@ -29,7 +29,6 @@
     imagemagick
     seafile-client
     zoom-us
-    winboat
   ];
 
   programs.firefox.enable = true;

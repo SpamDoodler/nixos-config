@@ -8,6 +8,7 @@
   home.packages = with pkgs; [
     hyprpaper
     wofi
+    brightnessctl
   ];
 
   services.hyprpaper = {
@@ -72,8 +73,8 @@
         "$mod SHIFT, R, exec, hyprctl reload"
 
         # Brightness
-        ", XF86MonBrightnessDown, exec, light -U 10"
-        ", XF86MonBrightnessUp, exec, light -A 10"
+        ", XF86MonBrightnessDown, exec, brightnessctl 10%+"
+        ", XF86MonBrightnessUp, exec, brightnessctl 10%-"
 
         # Volume
         ", XF86AudioRaiseVolume, exec, wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 5%+"

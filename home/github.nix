@@ -5,6 +5,7 @@
 }: {
   programs.git = {
     enable = true;
+    signing.format = null;
 
     # This is the default user
 
