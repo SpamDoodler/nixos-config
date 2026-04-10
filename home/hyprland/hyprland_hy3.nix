@@ -24,20 +24,20 @@
     };
   };
 
-  programs.hyprland.enable = false;
   wayland.windowManager.hyprland = {
       
     enable = true;
-    package = inputs.hyprland.packages.${pkgs.system}.hyprland;
+    package = inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system}.hyprland;
 
     systemd.variables = ["--all"];
 
     plugins = [
-      inputs.hy3.packages.${pkgs.system}.hy3
+      inputs.hy3.packages.${pkgs.stdenv.hostPlatform.system}.hy3
     ];
 
     settings = {
-      "plugin:hy3" = {};
+      "plugin:hy3" = {
+        };
       "$mod" = "SUPER";
 
       bind = [
@@ -69,7 +69,7 @@
         "$mod, V, hy3:makegroup, v"  # vertical split
         
         # Toggle split orientation
-        "$mod, E, hy3:changegrouporient, togglesplit"
+        "$mod, E, hy3:changegroup, opposite"
         
         # Tabbed layout (i3-style)
         "$mod, W, hy3:makegroup, tab"
@@ -170,12 +170,13 @@
       ];
 
       general = {
-        border_size = 2;
-        gaps_in = 5;
-        gaps_out = 10;
+        layout = "hy3";
+        border_size = 0;
+        gaps_in = 0;
+        gaps_out = 0;
         "col.active_border" = "rgba(88888888)";
         "col.inactive_border" = "rgba(00000088)";
-        no_border_on_floating = false;
+        # no_border_on_floating = false;
       };
 
       # hy3 plugin settings

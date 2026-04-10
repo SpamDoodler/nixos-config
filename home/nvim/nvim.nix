@@ -18,6 +18,9 @@
     vimAlias = true;
     vimdiffAlias = true;
 
+    withPython3 = false;
+    withRuby = false;
+
     # Plugins
     plugins = with pkgs.vimPlugins; [
       nvim-tree-lua

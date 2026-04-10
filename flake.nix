@@ -12,7 +12,7 @@
     };
 
     hyprland = {
-      url = "github:hyprwm/Hyprland/v0.54.2";
+     url = "github:hyprwm/Hyprland/59f9f2688ac508a0584d1462151195a6c4992f99";
     };
     hy3 = {
       url = "github:outfoxxed/hy3?ref=hl0.54.2"; # where {version} is the hyprland release version
