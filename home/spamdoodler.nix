@@ -1,7 +1,7 @@
 {
   config,
   pkgs,
-  home-manager,
+  inputs,
   ...
 }: {
   home.username = "spamdoodler";
@@ -13,7 +13,7 @@
     ./dropbox.nix
     ./github.nix
     ./ghostty.nix
-    ./hyprland/hyprland.nix
+    ./hyprland/hyprland_hy3.nix
     ./mouse.nix
     #./niri.nix
     ./nvim/nvim.nix

@@ -1,8 +1,7 @@
 {
   config,
   pkgs,
-  hyprland,
-  hy3,
+  inputs,
   ...
 }: 
 
@@ -10,6 +9,7 @@
   home.packages = with pkgs; [
     hyprpaper
     wofi
+    brightnessctl
   ];
 
   services.hyprpaper = {
@@ -24,16 +24,20 @@
     };
   };
 
- 
+  programs.hyprland.enable = false;
   wayland.windowManager.hyprland = {
+      
     enable = true;
+    package = inputs.hyprland.packages.${pkgs.system}.hyprland;
+
     systemd.variables = ["--all"];
 
     plugins = [
-      hy3.packages.x86_64-linux.hy3
+      inputs.hy3.packages.${pkgs.system}.hy3
     ];
 
     settings = {
+      "plugin:hy3" = {};
       "$mod" = "SUPER";
 
       bind = [
@@ -94,8 +98,8 @@
         "$mod SHIFT, R, exec, hyprctl reload"
 
         # Brightness
-        ", XF86MonBrightnessDown, exec, light -U 10"
-        ", XF86MonBrightnessUp, exec, light -A 10"
+        ", XF86MonBrightnessDown, exec, brightnessctl 10%-"
+        ", XF86MonBrightnessUp, exec, brightnessctl 10%+"
 
         # Volume
         ", XF86AudioRaiseVolume, exec, wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 5%+"
@@ -160,7 +164,6 @@
       };
 
       exec-once = [
-        "hyprpm reload -n"
         "waybar"
         "fcitx5 -d"
         "bash -c \"$HOME/nixos/scripts/hyprback.sh\""
