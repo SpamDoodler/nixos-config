@@ -5,7 +5,7 @@
 }: {
   # Bootloader.
   boot = {
-    kernelModules = ["kvm" "kvm_intel" "amdgpu" "kmv_amd"];
+    kernelModules = ["amdgpu" "kvm-amd"];
        
     kernelPackages = pkgs.linuxPackagesFor pkgs.linuxKernel.kernels.linux_testing;
 
@@ -29,7 +29,7 @@
       blacklist floppy
       options nouveau modeset=0
     '';
-    blacklistedKernelModules = ["nouvea" "nvidia" "nvidia_drm" "nvidia_modeset"];
+    blacklistedKernelModules = ["nouveau" "nvidia" "nvidia_drm" "nvidia_modeset"];
     supportedFilesystems = ["ntfs"];
 
     tmp.cleanOnBoot = true;

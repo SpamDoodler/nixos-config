@@ -7,15 +7,15 @@
       url = "github:NixOS/nixpkgs/nixos-unstable";
     };
     home-manager = {
-      url = "github:nix-community/home-manager";
+      url = "github:nix-community/home-manager/master";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
     hyprland = {
-     url = "github:hyprwm/Hyprland/59f9f2688ac508a0584d1462151195a6c4992f99";
+     url = "github:hyprwm/Hyprland/v0.55.0";
     };
     hy3 = {
-      url = "github:outfoxxed/hy3?ref=hl0.54.2"; # where {version} is the hyprland release version
+      url = "github:outfoxxed/hy3?ref=hl0.55.0"; # where {version} is the hyprland release version
       inputs.hyprland.follows = "hyprland";
     };
   };

@@ -15,21 +15,18 @@
     # networking.wireless.iwd.enable = true;
     networkmanager = {
       enable = true;
-      wifi = {
-        scanRandMacAddress = false;
-      };
-      # wifi.backend = "iwd";
+      wifi.scanRandMacAddress = false;
       wifi.powersave = false;
     };
-    interfaces.wlan0.useDHCP = true;
-    nameservers = ["8.8.8.8"];
+
+    nameservers = ["9.9.9.9"];
 
     nftables.enable = true;
 
     firewall = {
       enable = true;
-      allowedTCPPorts = [22 443 51820];
-      allowedUDPPorts = [51820];
+      allowedTCPPorts = [22];
+      # allowedUDPPorts = [51820];
     };
   };
 }

@@ -17,6 +17,7 @@
   ];
 
   # Set your time zone.
-  time.timeZone = "Europe/Berlin";
+  services.automatic-timezoned.enable = true;
+  # time.timeZone = "Europe/Berlin";
   system.stateVersion = "23.05"; # Did you read the comment?
 }

@@ -4,7 +4,7 @@
   ...
 }: {
   # Power settings
-  services.power-profiles-daemon.enable = false;
+  services.power-profiles-daemon.enable = true;
   services.thermald.enable = true;
   services.upower = {
     enable = true;
@@ -23,13 +23,12 @@
     # };
   };
 
-  services.auto-cpufreq.enable = true;
+  services.auto-cpufreq.enable = false;
 
   powerManagement = {
     enable = true;
-    powertop.enable = true;
-    cpuFreqGovernor = "schedutil";
+    powertop.enable = false;
   };
 
-  services.system76-scheduler.enable = true;
+  services.system76-scheduler.enable = false;
 }

@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 STATE_FILE="$HOME/.cache/current_wallpaperset"
 SFW_DIR="$HOME/Pictures/anime_wallpapers/sfw"
-[ -f "$STATE_FILE" ] || echo "sfw" > "$STATE_FILE"
+
+mkdir -p "$(dirname "$STATE_FILE")"
+[ -f "$STATE_FILE" ] || echo "$SFW_DIR" > "$STATE_FILE"
 
 while true; do
     WALLPAPER_DIR=$(cat "$STATE_FILE")

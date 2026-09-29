@@ -25,7 +25,7 @@
   };
 
   wayland.windowManager.hyprland = {
-      
+    configType = "hyprlang";
     enable = true;
     package = inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system}.hyprland;
 
@@ -98,8 +98,8 @@
         "$mod SHIFT, R, exec, hyprctl reload"
 
         # Brightness
-        ", XF86MonBrightnessDown, exec, brightnessctl 10%-"
-        ", XF86MonBrightnessUp, exec, brightnessctl 10%+"
+        ", XF86MonBrightnessDown, exec, brightnessctl set 10%-"
+        ", XF86MonBrightnessUp, exec, brightnessctl set 10%+"
 
         # Volume
         ", XF86AudioRaiseVolume, exec, wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 5%+"
@@ -112,12 +112,12 @@
         "$mod, C, exec, google-chrome-stable"
         "$mod SHIFT, C, exec, firefox"
         "$mod, O, exec, bash -c \"nmcli radio wifi | grep -q 'enabled' && nmcli radio wifi off || nmcli radio wifi on\""
-        "$mod, X, exec, bash -c \"$HOME/nixos/scripts/waybar.sh\""
+        "$mod, X, exec, bash -c \"$HOME/nixos/scripts/waybar.sh hyprland\""
         "$mod SHIFT, B, exec, bash -c \"$HOME/nixos/scripts/set_wallpapers.sh\""
 
         # Fullscreen
-        "SUPER, F, fullscreenstate, 2 -1"
-        "SUPER SHIFT, F, fullscreen"
+        "SUPER SHIFT, F, fullscreenstate, 1 -1"
+        "SUPER, F, fullscreen"
 
         # Workspaces
         "$mod, 1, workspace, 1"
@@ -164,7 +164,7 @@
       };
 
       exec-once = [
-        "waybar"
+        "waybar -c $HOME/.config/waybar/hyprland.json"
         "fcitx5 -d"
         "bash -c \"$HOME/nixos/scripts/hyprback.sh\""
       ];

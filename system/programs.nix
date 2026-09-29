@@ -17,11 +17,16 @@
     p7zip
     eza
     starship
+    ripgrep
     git
+    fd
+    fmt
+    git-lfs
+    jq
     delta
     grim # Wayland screenshot utility
     alacritty
-    ripgrep
+    kitty
     bottom
     powertop
     neovim
@@ -53,6 +58,8 @@
     gphoto2fs
     libtiff
     ncdu
+    bat
+    eza
     openconnect
     openssl
     graphviz
@@ -62,6 +69,9 @@
     wl-clipboard
     zip
     imagemagick
+    uutils-procps
+    psmisc
+    tmux
   ];
 
   environment.variables.EDITOR = "nvim";

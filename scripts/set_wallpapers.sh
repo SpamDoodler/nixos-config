@@ -10,7 +10,7 @@ CURRENT=$(cat "$STATE_FILE")
 
 if [ "$CURRENT" = "$SFW_DIR" ]; then
     echo "$NSFW_DIR"> "$STATE_FILE"
-    FOLDER="$NSWF_DIR"
+    FOLDER="$NSFW_DIR"
 else
     echo "$SFW_DIR" > "$STATE_FILE"
     FOLDER="$SFW_DIR"
@@ -18,9 +18,5 @@ fi
 
 WALLPAPER=$(find "$FOLDER" -type f | shuf -n 1)
 
-pkill hyprpaper
-hyprpaper
-# Apply the selected wallpaper
-# hyprctl hyprpaper unload all || true
 hyprctl hyprpaper preload "$WALLPAPER"
 hyprctl hyprpaper wallpaper "eDP-1,$WALLPAPER"

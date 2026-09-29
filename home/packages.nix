@@ -5,10 +5,12 @@
 }: {
   home.packages = with pkgs; [
     aider-chat
+    opencode
     swaybg
     oh-my-zsh
+    dosbox-staging
     google-chrome
-    texlive.combined.scheme-full
+    texliveFull
     mpv
     ani-cli
     peerflix-server
@@ -21,6 +23,8 @@
     tor-browser
     tdf
     gap-full
+    supercollider
+    lilypond
     lie
     rainloop-standard
     pre-commit
@@ -31,5 +35,8 @@
     zoom-us
   ];
 
-  programs.firefox.enable = true;
+  programs.firefox = {
+    enable = true;
+    configPath = "${config.xdg.configHome}/mozilla/firefox";
+  };
 }

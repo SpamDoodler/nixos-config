@@ -27,11 +27,11 @@
     BrowseProtocols all
   '';
 
-  services.journald.extraConfig = ''
-    Storage=volatile
-    RateLimitInterval=30s
-    RateLimitBurst=1000
-  '';
+  services.journald.settings.Journal = {
+    Storage = "persistent";
+    RateLimitInterval="30s";
+    RateLimitBurst=1000;
+  };
 
   services.tor = {
     enable = true;
@@ -39,16 +39,12 @@
     # Disable GeoIP to prevent the Tor client from estimating the locations of Tor nodes it connects to
     enableGeoIP = false;
 
-    # Enable Torsocks for transparent proxying of applications through Tor
     torsocks.enable = true;
 
     # Enable the Tor client
     client = {
       enable = true;
     };
-
-    # Enable and configure the Tor relay
-    relay.enable = false;
 
     # Configure Tor settings
     settings = {
@@ -86,7 +82,13 @@
   };
 
   # Enable the OpenSSH daemon.
-  services.openssh.enable = true;
+  services.openssh = {
+    enable = true;
+  };
+
+  services.ollama = {
+    enable = true;
+  };
 
   services.fwupd.enable = true;
   services.fstrim = {
@@ -105,6 +107,7 @@
     alsa.enable = true;
     alsa.support32Bit = true;
     pulse.enable = true;
+    jack.enable = true;
   };
 
   # Wayland related

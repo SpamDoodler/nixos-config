@@ -27,7 +27,7 @@ in {
       };
       bars = [
         {
-          command = "waybar";
+          command = "waybar -c $HOME/.config/waybar/sway.json";
         }
       ];
     };

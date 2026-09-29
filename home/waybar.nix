@@ -2,53 +2,59 @@
   config,
   pkgs,
   ...
-}: {
+}: let
+  common = {
+    layer = "top";
+    position = "top";
+    modules-center = ["clock"];
+    modules-right = ["pulseaudio" "cpu" "memory" "disk" "temperature" "battery" "network" "tray"];
+
+    "disk" = {
+      interval = 30;
+      format = " 🖴 {free} ";
+    };
+
+    "network" = {
+      format-wifi = "   {essid} {signalStrength}% ";
+      format-ethernet = " 🖧 {ifname} ";
+      format-disconnected = "  offline ";
+      tooltip = true;
+      interval = 5;
+    };
+
+    "memory" = {
+      format = " {used:0.1f}G/{total:0.1f}G ";
+      interval = 5;
+    };
+
+    "clock" = {
+      format = "{:%Y-%m-%d %H:%M:%S}";
+      interval = 1;
+    };
+
+    "pulseaudio" = {
+      format = " 🔈 {volume}% ";
+      format-muted = " 🔇 ";
+    };
+
+    "cpu" = {format = "  {usage}% ";};
+
+    "temperature" = {
+      thermal-zone = 0;
+      format = " {temperatureC}°C ";
+    };
+
+    "battery" = {format = "  {capacity}% ";};
+  };
+  hyprlandConfig = common // {
+    modules-left = ["hyprland/workspaces"];
+  };
+  swayConfig = common // {
+    modules-left = ["sway/workspaces" "sway/mode"];
+  };
+in {
   programs.waybar = {
     enable = true;
-    settings = {
-      mainBar = {
-        layer = "top";
-        position = "top";
-        modules-left = [
-          "sway/workspaces"
-          "sway/mode"
-          "hyprland/workspaces"
-        ];
-        modules-center = ["clock"];
-        modules-right = ["pulseaudio" "cpu" "memory" "disk" "temperature" "battery" "network" "tray"];
-
-        "disk" = {
-          interval = 30;
-          format = " 🖴 {free} ";
-        };
-
-        "network" = {
-          format-wifi = "   {essid} {signalStrength}% ";
-          format-ethernet = " 🖧 {ifname} ";
-          format-disconnected = "  offline ";
-          tooltip = true;
-          interval = 5;
-        };
-        "memory" = {
-          format = " {used:0.1f}G/{total:0.1f}G ";
-          interval = 5;
-        };
-        "clock" = {
-          format = "{:%Y-%m-%d %H:%M:%S}";
-          interval = 1;
-        };
-        "pulseaudio" = {
-          format = " 🔈 {volume}% ";
-          format-muted = " 🔇 ";
-        };
-        "cpu" = {format = "  {usage}% ";};
-        "temperature" = {
-          thermal-zone = 0;
-          format = " {temperatureC}°C ";
-        };
-        "battery" = {format = "  {capacity}% ";};
-      };
-    };
     style = ''
       * {
         border: none;
@@ -79,4 +85,7 @@
       }
     '';
   };
+
+  xdg.configFile."waybar/hyprland.json".text = builtins.toJSON hyprlandConfig;
+  xdg.configFile."waybar/sway.json".text = builtins.toJSON swayConfig;
 }

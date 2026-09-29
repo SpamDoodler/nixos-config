@@ -40,3 +40,10 @@ vim.lsp.config('texlab', {
     capabilities = cmp_capabilities,
 })
 
+vim.lsp.enable({
+  "pyright",
+  "clangd",
+  "rust_analyzer",
+  "texlab",
+})
+

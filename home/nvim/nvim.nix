@@ -39,11 +39,11 @@
       vim-flake8
       vim-clang-format
       vim-matchup
-      blink-cmp
       clangd_extensions-nvim
       nvim-lint
       none-ls-nvim
       vimtex
+      scnvim
     ];
     # extraConfig = (builtins.readFile ./init.vim) ;
     initLua = ''
