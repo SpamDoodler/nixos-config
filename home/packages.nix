@@ -5,7 +5,6 @@
 }: {
   home.packages = with pkgs; [
     aider-chat
-    opencode
     swaybg
     oh-my-zsh
     dosbox-staging

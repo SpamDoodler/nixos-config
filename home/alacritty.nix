@@ -16,10 +16,10 @@
       font = {
         size = 11;
 
-        normal.family = "FiraCode Nerd Font";
-        normal.style = "Medium";
-        bold.family = "FiraCode Nerd Font";
-        italic.family = "FiraCode Nerd Font";
+        normal.family = "Sarasa Mono SC";
+        normal.style = "Regular";
+        bold.family = "Sarasa Mono SC";
+        italic.family = "Sarasa Mono SC";
       };
       colors = {
         primary = {

@@ -12,7 +12,7 @@
     };
 
     hyprland = {
-     url = "github:hyprwm/Hyprland/v0.55.0";
+      url = "github:hyprwm/Hyprland/v0.55.0";
     };
     hy3 = {
       url = "github:outfoxxed/hy3?ref=hl0.55.0"; # where {version} is the hyprland release version
@@ -33,7 +33,7 @@
   in {
     nixosConfigurations = {
       NixSama = nixpkgs.lib.nixosSystem {
-        specialArgs = { inherit inputs; };
+        specialArgs = {inherit inputs;};
         # system = "x86_64-linux";
         modules = [
           ./hardware/hardware.nix
@@ -44,12 +44,20 @@
           {
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
-            home-manager.extraSpecialArgs = { inherit inputs; };
+            home-manager.extraSpecialArgs = {inherit inputs;};
             home-manager.users.spamdoodler = import ./home/spamdoodler.nix;
           }
         ];
       };
     };
     formatter.${system} = pkgs.alejandra;
+
+    devShells.${system}.ai-supercollider = pkgs.mkShell {
+      packages = [pkgs.supercollider];
+      shellHook = ''
+        echo "AI + SuperCollider workspace"
+        echo "Run: sclang projects/ai-supercollider/sessions/01-first-sound.scd"
+      '';
+    };
   };
 }

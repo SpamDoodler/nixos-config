@@ -7,6 +7,7 @@
     enableDefaultPackages = true;
     packages = with pkgs; [
       nerd-fonts.fira-code
+      sarasa-gothic
       corefonts
       cascadia-code
       fira-code
@@ -35,8 +36,8 @@
     fontconfig = {
       defaultFonts = {
         monospace = [
-          "Source Code Pro"
-          "Noto Sans Mono SC"
+          "Sarasa Mono SC"
+          "Noto Sans Mono CJK SC"
         ];
         sansSerif = [
           "Noto Sans CJK SC"

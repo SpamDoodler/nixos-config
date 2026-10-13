@@ -58,8 +58,8 @@ in {
     style = ''
       * {
         border: none;
-        font-family: "Iosevka Nerd Font";
-        font-size: 14px;
+        font-family: "Sarasa Mono SC";
+        font-size: 13px;
       }
       window#waybar {
         background: rgba(40, 44, 72, 0.9);

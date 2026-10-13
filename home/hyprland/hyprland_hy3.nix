@@ -13,7 +13,7 @@
   ];
 
   services.hyprpaper = {
-    enable = true;
+    enable = false;
     settings = {
       preload = [
         "${config.home.homeDirectory}/Pictures/anime_wallpapers/sfw/default.jpeg"
@@ -36,6 +36,10 @@
     ];
 
     settings = {
+      env = [
+        "AQ_DRM_DEVICES,/dev/dri/card1"
+      ];
+
       "plugin:hy3" = {
         };
       "$mod" = "SUPER";
@@ -164,6 +168,7 @@
       };
 
       exec-once = [
+        "hyprpaper"
         "waybar -c $HOME/.config/waybar/hyprland.json"
         "fcitx5 -d"
         "bash -c \"$HOME/nixos/scripts/hyprback.sh\""

@@ -7,7 +7,9 @@
     enable = true;
 
     settings = {
-      font-family = "FiraCode Nerd Font";
+      font-family = [
+        "Sarasa Mono SC"
+      ];
       font-size = 12;
     };
   };

@@ -21,9 +21,9 @@ in {
         "Virtual-1" = {mode = "1920x1080@60Hz";};
       };
       fonts = {
-        names = ["Pango Hack"];
+        names = ["Noto Sans CJK SC"];
         style = "Regular";
-        size = 11.0;
+        size = 10.5;
       };
       bars = [
         {

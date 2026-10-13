@@ -17,6 +17,7 @@
     ./mouse.nix
     #./niri.nix
     ./nvim/nvim.nix
+    ./opencode/opencode.nix
     ./packages.nix
     #./patches.nix
     ./shell.nix
