@@ -5,6 +5,16 @@
 }: {
   nixpkgs.config.allowUnfree = true;
 
+  # Use the same nixos-unstable package set as Home Manager and Mesa.
+  programs.hyprland = {
+    enable = true;
+    package = pkgs.hyprland;
+    portalPackage = pkgs.xdg-desktop-portal-hyprland;
+  };
+
+  # Explicitly select the Home Manager Lua entrypoint for graphical logins.
+  environment.sessionVariables.HYPRLAND_CONFIG = "/home/spamdoodler/.config/hypr/hyprland.lua";
+
   programs.steam = {
     enable = true;
     remotePlay.openFirewall = true;
@@ -12,7 +22,7 @@
   };
 
   programs.zsh.enable = true;
-   environment.systemPackages = with pkgs; [
+  environment.systemPackages = with pkgs; [
     unzip
     p7zip
     eza

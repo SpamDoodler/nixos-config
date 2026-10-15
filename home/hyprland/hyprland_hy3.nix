@@ -1,11 +1,8 @@
 {
   config,
   pkgs,
-  inputs,
   ...
-}: 
-
-{
+}: {
   home.packages = with pkgs; [
     hyprpaper
     wofi
@@ -27,21 +24,17 @@
   wayland.windowManager.hyprland = {
     configType = "hyprlang";
     enable = true;
-    package = inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system}.hyprland;
+    # Share nixos-unstable's compositor, plugin ABI, and graphics dependencies.
+    package = pkgs.hyprland;
+    portalPackage = pkgs.xdg-desktop-portal-hyprland;
 
     systemd.variables = ["--all"];
 
     plugins = [
-      inputs.hy3.packages.${pkgs.stdenv.hostPlatform.system}.hy3
+      pkgs.hyprlandPlugins.hy3
     ];
 
     settings = {
-      env = [
-        "AQ_DRM_DEVICES,/dev/dri/card1"
-      ];
-
-      "plugin:hy3" = {
-        };
       "$mod" = "SUPER";
 
       bind = [
@@ -69,24 +62,24 @@
 
         # --- hy3: Container management (i3-style) ---
         # Split horizontal/vertical
-        "$mod, B, hy3:makegroup, h"  # horizontal split
-        "$mod, V, hy3:makegroup, v"  # vertical split
-        
+        "$mod, B, hy3:makegroup, h" # horizontal split
+        "$mod, V, hy3:makegroup, v" # vertical split
+
         # Toggle split orientation
         "$mod, E, hy3:changegroup, opposite"
-        
+
         # Tabbed layout (i3-style)
         "$mod, W, hy3:makegroup, tab"
-        
+
         # Change focus between tiling/floating
         "$mod, Space, hy3:changefocus, raise"
-        
+
         # Toggle floating
         "$mod SHIFT, Space, togglefloating"
 
         # --- hy3: Tab navigation ---
-        "$mod, A, hy3:changefocus, left, visible"   # previous tab
-        "$mod, S, hy3:changefocus, right, visible"  # next tab
+        "$mod, A, hy3:changefocus, left, visible" # previous tab
+        "$mod, S, hy3:changefocus, right, visible" # next tab
 
         # --- Resize active window ---
         "$mod CTRL, H, resizeactive, -50 0"
@@ -188,7 +181,7 @@
       plugin = {
         hy3 = {
           # no_gaps_when_only = false;  # set to true for i3 gaps behavior
-          
+
           tabs = {
             height = 15;
             padding = 5;
@@ -197,7 +190,7 @@
             "col.inactive" = "rgba(00000088)";
             "col.urgent" = "rgba(ff0000ff)";
           };
-          
+
           autotile = {
             enable = true;
             trigger_width = 800;

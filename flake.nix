@@ -10,22 +10,12 @@
       url = "github:nix-community/home-manager/master";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-
-    hyprland = {
-      url = "github:hyprwm/Hyprland/v0.55.0";
-    };
-    hy3 = {
-      url = "github:outfoxxed/hy3?ref=hl0.55.0"; # where {version} is the hyprland release version
-      inputs.hyprland.follows = "hyprland";
-    };
   };
 
   outputs = {
     self,
     nixpkgs,
     home-manager,
-    hyprland,
-    hy3,
     ...
   } @ inputs: let
     system = "x86_64-linux";

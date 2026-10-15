@@ -13,7 +13,7 @@
     ./dropbox.nix
     ./github.nix
     ./ghostty.nix
-    ./hyprland/hyprland_hy3.nix
+    ./hyprland/hyprland_hy_lua.nix
     ./mouse.nix
     #./niri.nix
     ./nvim/nvim.nix

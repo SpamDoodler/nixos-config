@@ -205,7 +205,6 @@ in {
         "extensions": [".nix"]
       }},
       "agent": ${builtins.toJSON agents},
-      "subagent_depth": 1,
       "command": ${builtins.toJSON commands},
       "provider": {"openai": {"models": {"${model}": {
         "options": {"reasoningEffort": "high", "textVerbosity": "low"},
