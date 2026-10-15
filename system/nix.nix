@@ -1,5 +1,4 @@
 {
-  config,
   pkgs,
   lib,
   ...
@@ -8,15 +7,13 @@
   programs.ccache.enable = true;
   nix = {
     package = pkgs.nixVersions.git;
-    extraOptions = ''
-      experimental-features = nix-command flakes
-    '';
     gc = {
       automatic = true;
       dates = "weekly";
       options = "--delete-older-than 30d";
     };
     settings = {
+      experimental-features = ["nix-command" "flakes"];
       auto-optimise-store = true;
       max-jobs = 8;
       download-buffer-size = 524288000;

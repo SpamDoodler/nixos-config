@@ -147,3 +147,59 @@ dependent system-path/restart-trigger derivations are regenerated. No activation
 was performed. Script edits change comments only, but scripts are mutable runtime
 files, not Home Manager-generated outputs. Fresh-login and interactive desktop
 tests remain outside this mechanical pass.
+
+## Phase 2: source layout and structured options
+
+Baseline: `42121623bc8d1ff38e3f95090469a8fe9dccf4be` (`Mechanical cleanup`).
+This pass is a maintainability refactor, not the service/security remediation pass.
+
+- Extract Hyprland bindings/startup Lua to
+  `home/hyprland/bindings-and-startup.lua` and Wofi styling to
+  `home/hyprland/wofi.css`. The Nix module reads the files into the same generated
+  output; it does not add runtime `require` calls or change startup ordering.
+- Extract OpenCode global instructions and the three curated skill documents to
+  adjacent Markdown source files. Destination paths and all deployed text are
+  unchanged. Keep the launcher and ordered permission JSON in Nix: they were not
+  altered, and no models, provider options or permissions changed.
+- Replace free-form `nix.extraOptions` with
+  `nix.settings.experimental-features = ["nix-command" "flakes"]`.
+  Previously generated nix.conf contained an empty assignment followed by the
+  effective nonempty override; now it contains one nonempty assignment. Parsed
+  last-assignment-wins settings are equal for every key.
+
+Validation compared the baseline flake with local `flake.nix` outputs using the
+baseline's locked inputs. All generated Home Manager file text/source references,
+the Home Manager activation derivation, and system/home package identities and
+order are identical. There are no failed NixOS assertions or warnings. Alejandra
+checks passed for the three changed Nix files, as did `git diff --check`.
+OpenCode reports version 1.19.0; no paid inference or runtime configuration changes
+were performed. Byte-identical generated files and activation identity establish
+that its launcher, configuration and instructions were preserved.
+
+The offline system build passed, yielding:
+`/nix/store/9i3bnahgymnvhzkys17ag3c3qhij3ilm-nixos-system-NixSama-26.11.20261011.7fd4004`.
+Only nix.conf and dependent Nix-daemon restart-trigger/system derivations needed
+rebuilding. A later activation may restart nix-daemon because the generated file
+identity changed; its effective settings remain the same. No activation occurred.
+
+### New source files and Git flakes
+
+New files must be added to Git before a normal Git-backed flake rebuild can see
+them. This pass does not stage files automatically. Add the two Lua/CSS files and
+four Markdown files listed in the diff along with their changed Nix modules when
+preparing the commit; no commit is required merely for Nix to include them.
+
+Before staging, the validation build used local imports to include these sources
+without staging them or copying unrelated workspace scratch into a path flake:
+
+```sh
+nix build --offline --no-write-lock-file --impure --no-link --print-out-paths \
+  --expr 'let
+    old = builtins.getFlake "git+file:///home/spamdoodler/nixos?rev=42121623bc8d1ff38e3f95090469a8fe9dccf4be";
+    new = (import ./flake.nix).outputs (old.inputs // { self = old; });
+  in new.nixosConfigurations.NixSama.config.system.build.toplevel'
+```
+
+No wallpaper lifecycle, migration-hook deletion behavior, credential handling,
+Tor policy, package ownership, privilege boundary or deferred font cleanup was
+changed. The open issues above remain open.
