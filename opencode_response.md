@@ -1,5 +1,9 @@
 # Response to the proposed OpenCode setup
 
+> Historical snapshot, not the current configuration. The maintained source is
+> [`home/opencode/opencode.nix`](home/opencode/opencode.nix).
+> The dated discussion and embedded module below are retained as history.
+
 Date: 9 October 2026.
 
 This response addresses `~/nixos/opencode_setup.md` using the current Home Manager module at `~/nixos/home/opencode/opencode.nix` and the earlier OpenCode lab research. The complete module is included below. This is a source-configuration snapshot, not a dump of the effective runtime configuration: activation state, project overrides, remembered model choices, authentication, and plugin behavior have not been verified here.

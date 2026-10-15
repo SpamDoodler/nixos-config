@@ -1,9 +1,4 @@
-{
-  config,
-  pkgs,
-  inputs,
-  ...
-}: {
+{...}: {
   home.username = "spamdoodler";
   home.homeDirectory = "/home/spamdoodler";
   programs.home-manager.enable = true;
@@ -15,11 +10,9 @@
     ./ghostty.nix
     ./hyprland/hyprland_hy_lua.nix
     ./mouse.nix
-    #./niri.nix
     ./nvim/nvim.nix
     ./opencode/opencode.nix
     ./packages.nix
-    #./patches.nix
     ./shell.nix
     ./starship.nix
     ./sway/sway.nix

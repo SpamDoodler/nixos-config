@@ -1,8 +1,4 @@
-{
-  config,
-  pkgs,
-  ...
-}: {
+{pkgs, ...}: {
   nixpkgs.config.allowUnfree = true;
 
   # Use the same nixos-unstable package set as Home Manager and Mesa.
@@ -69,7 +65,6 @@
     libtiff
     ncdu
     bat
-    eza
     openconnect
     openssl
     graphviz
@@ -85,6 +80,4 @@
   ];
 
   environment.variables.EDITOR = "nvim";
-
-  # TODO: zsh integration and alias for bat, eza, fzf, etc.
 }

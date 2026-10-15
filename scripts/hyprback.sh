@@ -7,13 +7,10 @@ mkdir -p "$(dirname "$STATE_FILE")"
 
 while true; do
     WALLPAPER_DIR=$(cat "$STATE_FILE")
-    # Get a random wallpaper that is not the current one
+    # Choose a random regular file; repeats are possible.
     WALLPAPER=$(find "$WALLPAPER_DIR" -type f | shuf -n 1)
     sleep 1
-    # pkill hyprpaper
-    # hyprpaper
     # Apply the selected wallpaper
-    # hyprctl hyprpaper unload all
     hyprctl hyprpaper unload all || true
     hyprctl hyprpaper preload "$WALLPAPER"
     hyprctl hyprpaper wallpaper "eDP-1,$WALLPAPER"

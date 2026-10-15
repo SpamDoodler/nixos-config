@@ -1,8 +1,4 @@
-{
-  config,
-  pkgs,
-  ...
-}: {
+{pkgs, ...}: {
   users.users.spamdoodler = {
     isNormalUser = true;
     shell = pkgs.zsh;
@@ -19,6 +15,5 @@
       "gamemode"
     ];
     uid = 1000;
-    packages = with pkgs; [];
   };
 }

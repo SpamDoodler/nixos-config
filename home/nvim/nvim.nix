@@ -1,8 +1,4 @@
-{
-  config,
-  pkgs,
-  ...
-}: {
+{pkgs, ...}: {
   home.packages = with pkgs; [
     black
     clang-tools
@@ -45,7 +41,6 @@
       vimtex
       scnvim
     ];
-    # extraConfig = (builtins.readFile ./init.vim) ;
     initLua = ''
       ${builtins.readFile ./lua/core/options.lua}
       ${builtins.readFile ./lua/core/autocommands.lua}
@@ -54,9 +49,9 @@
       ${builtins.readFile ./lua/setup/colorscheme.lua}
       ${builtins.readFile ./lua/plugins/lsp.lua}
       ${builtins.readFile ./lua/plugins/completion.lua}
-      ${builtins.readFile ./lua/plugins/bufferline.lua}
+
       ${builtins.readFile ./lua/plugins/treesitter.lua}
-      ${builtins.readFile ./lua/plugins/nvim-tree.lua}
+
       ${builtins.readFile ./lua/plugins/vimtex.lua}
     '';
   };

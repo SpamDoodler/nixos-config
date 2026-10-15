@@ -1,5 +1,8 @@
 # Making OpenCode more token-efficient and faster
 
+> Historical research proposal, not deployment instructions. The maintained
+> configuration is [`home/opencode/opencode.nix`](home/opencode/opencode.nix).
+
 Research and local verification: 9 October 2026.
 
 ## Executive recommendation

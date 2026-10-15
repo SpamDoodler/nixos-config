@@ -1,3 +1,5 @@
+# Historical alternative, not imported by home/spamdoodler.nix.
+# The maintained module is opencode.nix; do not import both modules together.
 {pkgs, ...}: let
   planningWithFiles = pkgs.fetchFromGitHub {
     owner = "OthmanAdi";

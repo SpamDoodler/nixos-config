@@ -1,13 +1,9 @@
-{
-  config,
-  pkgs,
-  ...
-}: let
+{...}: let
   swayExtraConfig = builtins.readFile ./sway.conf;
 in {
   wayland.windowManager.sway = {
     enable = true;
-    config = rec {
+    config = {
       modifier = "Mod4"; # Super key
       terminal = "alacritty";
       window.border = 0;
