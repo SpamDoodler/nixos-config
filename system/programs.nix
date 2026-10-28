@@ -9,7 +9,9 @@
   };
 
   # Explicitly select the Home Manager Lua entrypoint for graphical logins.
-  environment.sessionVariables.HYPRLAND_CONFIG = "/home/spamdoodler/.config/hypr/hyprland.lua";
+  environment.sessionVariables = {
+    HYPRLAND_CONFIG = "/home/spamdoodler/.config/hypr/hyprland.lua";
+  };
 
   programs.steam = {
     enable = true;

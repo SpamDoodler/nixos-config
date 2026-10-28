@@ -9,10 +9,12 @@ if [[ "$BAR" != "hyprland" && "$BAR" != "sway" ]]; then
 fi
 CONFIG="$HOME/.config/waybar/${BAR}.json"
 
-# Check if Waybar is running
-if pgrep waybar >/dev/null; then
+# Nix's wrapper changes the process name to .waybar-wrapped.
+# Match either exact name, limited to this user's processes.
+PROCESS_NAMES='waybar|\.waybar-wrapped'
+if pgrep -u "$(id -u)" -x "$PROCESS_NAMES" >/dev/null; then
     # Kill it (clean exit)
-    pkill waybar
+    pkill -u "$(id -u)" -x "$PROCESS_NAMES"
 else
     # Start it (Home Manager sets PATH etc.)
     waybar -c "$CONFIG" &

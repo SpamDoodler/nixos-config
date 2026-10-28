@@ -19,6 +19,4 @@
     enable = true;
     dockerCompat = false;
   };
-
-  environment.systemPackages = [pkgs.distrobox];
 }

@@ -3,7 +3,9 @@
   lib,
   pkgs,
   ...
-}: {
+}: let
+  scripts = import ../desktop-scripts.nix {inherit pkgs;};
+in {
   home.sessionVariables.HYPRLAND_CONFIG = "${config.xdg.configHome}/hypr/hyprland.lua";
 
   # Remove only the known generated legacy stub left by the old parser.
@@ -20,18 +22,33 @@
     hyprpaper
     wofi
     brightnessctl
+    scripts.wallpaperToggle
+    scripts.waybarToggle
   ];
 
   services.hyprpaper = {
-    enable = false;
-    settings = {
-      preload = [
-        "${config.home.homeDirectory}/Pictures/anime_wallpapers/sfw/default.jpeg"
-      ];
-      wallpaper = [
-        "eDP-1,${config.home.homeDirectory}/Pictures/anime_wallpapers/sfw/default.jpeg"
-      ];
+    enable = true;
+    systemdTarget = "hyprland-session.target";
+    # Do not activate the previously disabled example wallpaper configuration.
+    # Keep hyprpaper's existing config discovery and the scripts' runtime state.
+    settings = {};
+  };
+
+  systemd.user.services.hyprland-wallpaper-rotation = {
+    Unit = {
+      Description = "Hyprland wallpaper rotation";
+      After = ["hyprland-session.target" "hyprpaper.service"];
+      PartOf = ["hyprland-session.target"];
+      Requires = ["hyprpaper.service"];
+      ConditionEnvironment = ["WAYLAND_DISPLAY" "HYPRLAND_INSTANCE_SIGNATURE"];
     };
+    Service = {
+      ExecStart = lib.getExe scripts.hyprlandRotation;
+      Restart = "on-failure";
+      RestartSec = 3;
+      KillMode = "control-group";
+    };
+    Install.WantedBy = ["hyprland-session.target"];
   };
 
   wayland.windowManager.hyprland = {
@@ -159,7 +176,11 @@
       ];
     };
 
-    extraConfig = builtins.readFile ./bindings-and-startup.lua;
+    extraConfig =
+      builtins.replaceStrings
+      ["@waybarToggle@" "@wallpaperToggle@"]
+      [(lib.getExe scripts.waybarToggle) (lib.getExe scripts.wallpaperToggle)]
+      (builtins.readFile ./bindings-and-startup.lua);
   };
 
   xdg.configFile."wofi/style.css".text = builtins.readFile ./wofi.css;

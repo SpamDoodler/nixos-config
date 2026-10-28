@@ -12,7 +12,6 @@
       tree = "eza -T --icons";
       rm = "trash";
       cat = "bat";
-      ai = "aider --model deepseek/deepseek-chat";
     };
     oh-my-zsh = {
       enable = true;
@@ -20,8 +19,12 @@
       theme = "agnoster";
     };
     initContent = ''
-        export DEEPSEEK_API_KEY=$(cat ~/.deepseek_key)
+      export DEEPSEEK_API_KEY=$(cat ~/.deepseek_key)
     '';
+  };
+
+  home.sessionVariables = {
+    MODELS = "$HOME/models";
   };
 
   programs.bat = {

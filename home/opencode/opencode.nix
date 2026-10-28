@@ -1,6 +1,6 @@
 # Home Manager module. Replace the previous module, then rebuild normally.
 # Do not also install pkgs.opencode or enable programs.opencode elsewhere.
-# Tested with OpenCode 1.18.35; keep your flake.lock pinned.
+# Native V2 configuration, checked against the OpenCode 2.1.1 schema.
 # Trusted local work: Python/tests can execute arbitrary code, not a sandbox.
 {
   pkgs,
@@ -9,16 +9,61 @@
 }: let
   model = "gpt-6-luna";
   # Use an explicitly supported default effort; variants remain selectable.
-  readOnlyPermissions = {
-    edit = "deny";
-    bash = "deny";
-    task = "deny";
-    todowrite = "deny";
-  };
+  rules = action: effect: resources:
+    map (resource: {inherit action resource effect;}) resources;
+  readOnlyPermissions = lib.concatMap (action: rules action "deny" ["*"]) [
+    "edit"
+    "shell"
+    "subagent"
+    "todowrite"
+  ];
+  # V2 arrays retain last-match-wins ordering through builtins.toJSON.
+  permissions =
+    rules "*" "ask" ["*"]
+    ++ lib.concatMap (action:
+      rules action "allow" ["*"]
+      ++ rules action "deny" ["*.env" "*.env.*" "**/.env" "**/.env.*"]
+      ++ rules action "allow" ["*.env.example" "**/.env.example"]
+      ++ rules action "deny" ["**/*credential*" "**/*secret*"])
+    ["read" "edit"]
+    ++ lib.concatMap (action: rules action "allow" ["*"]) [
+      "glob"
+      "grep"
+      "todowrite"
+      "question"
+      "webfetch"
+    ]
+    ++ rules "subagent" "deny" ["*"]
+    ++ rules "subagent" "allow" ["explore" "review"]
+    ++ rules "skill" "deny" ["*"]
+    ++ rules "skill" "allow" ["nix-validation" "opencode-config-review" "exact-computation"]
+    ++ rules "external_directory" "ask" ["*"]
+    ++ rules "shell" "ask" ["*"]
+    ++ rules "shell" "allow" [
+      "git status*"
+      "git diff*"
+      "git log*"
+      "python"
+      "python *"
+      "python3"
+      "python3 *"
+      "pytest"
+      "pytest *"
+      "rg *"
+      "ls"
+      "ls *"
+      "mkdir *"
+      "mktemp"
+      "mktemp *"
+      "nix eval *"
+      "nix-instantiate --parse *"
+      "alejandra --check *"
+    ]
+    ++ rules "shell" "deny" ["rm *" "sudo *" "git push*" "git reset --hard*" "git clean*"];
   agents = {
-    general.disable = true;
-    scout.disable = true;
-    build.prompt = ''
+    general.disabled = true;
+    scout.disabled = true;
+    build.system = ''
       Handle small tasks directly. Delegate only bounded, independent codebase
       questions to explore or a supplied diff to review when a separate pass adds
       value. Give each specialist the objective, scope, relevant context and
@@ -26,12 +71,12 @@
       Integrate and verify their findings; delegation is not proof of correctness.
     '';
     explore = {
-      disable = false;
+      disabled = false;
       mode = "subagent";
       description = "Read-only codebase investigation with file locations and evidence";
-      permission = readOnlyPermissions;
-      prompt = ''
-        Answer the supplied codebase question using read, glob, grep and LSP.
+      permissions = readOnlyPermissions;
+      system = ''
+        Answer the supplied codebase question using read, glob and grep.
         Read project instructions, keep scope bounded and exclude .opencode-tmp.
         Return relevant paths and line numbers, evidence, and unresolved questions.
         Do not implement changes or request shell access. Stop once answered.
@@ -40,10 +85,10 @@
     review = {
       mode = "all";
       description = "Read-only review of supplied changes for actionable defects";
-      permission = readOnlyPermissions;
-      prompt = ''
+      permissions = readOnlyPermissions;
+      system = ''
         Review the supplied diff or named files against the requested behavior
-        and project instructions. Inspect surrounding code with read/search/LSP.
+        and project instructions. Inspect surrounding code with read and search.
         Report concrete defects with severity, file/line, failure scenario and
         supporting evidence. Separate confirmed issues from unverified concerns.
         Avoid speculative style complaints. State explicitly when no actionable
@@ -106,10 +151,6 @@
     name = "opencode";
     runtimeInputs = [pkgs.coreutils];
     text = ''
-      # Expose LSP queries without enabling unrelated experimental features.
-      export OPENCODE_EXPERIMENTAL_LSP_TOOL="''${OPENCODE_EXPERIMENTAL_LSP_TOOL:-true}"
-      # Supply language servers through Nix or project dev shells, not downloads.
-      export OPENCODE_DISABLE_LSP_DOWNLOAD=true
       # Parse known options without treating prompt/option values as flags.
       # Unknown/array options conservatively skip scratch; upstream parses argv.
       workspace="$PWD"
@@ -181,83 +222,47 @@ in {
   assertions = [
     {
       assertion =
-        lib.versionAtLeast (lib.getVersion pkgs.opencode) "1.18.30"
-        && lib.versionOlder (lib.getVersion pkgs.opencode) "2.0.0";
-      message = "This module targets OpenCode V1 >=1.18.30 and <2.0.0.";
+        lib.versionAtLeast (lib.getVersion pkgs.opencode) "2.1.1"
+        && lib.versionOlder (lib.getVersion pkgs.opencode) "3.0.0";
+      message = "This module targets OpenCode V2 >=2.1.1 and <3.0.0.";
     }
   ];
   home.packages = [launcher pkgs.nixd pkgs.alejandra];
 
-  # Literal JSON preserves last-match-wins permission ordering.
+  # Permissions use ordered arrays, not V1 tool-keyed maps.
   xdg.configFile."opencode/opencode.jsonc".text = ''
     {
       "$schema": "https://opencode.ai/config.json",
       "model": "openai/${model}",
       "default_agent": "build",
       "share": "disabled",
-      "autoupdate": false,
-      "plugin": [],
-      "lsp": {"nixd": {
-        "command": ["${pkgs.nixd}/bin/nixd"], "extensions": [".nix"]
-      }},
+      "update": "disable",
+      "plugins": [],
       "formatter": {"nixfmt": {"disabled": true}, "alejandra": {
         "command": ["${pkgs.alejandra}/bin/alejandra", "$FILE"],
         "extensions": [".nix"]
       }},
-      "agent": ${builtins.toJSON agents},
-      "command": ${builtins.toJSON commands},
-      "provider": {"openai": {"models": {"${model}": {
-        "options": {"reasoningEffort": "high", "textVerbosity": "low"},
-        "variants": {
-          "economy": {"reasoningEffort": "low"},
-          "balanced": {"reasoningEffort": "medium"},
-          "deep": {"reasoningEffort": "high"}
-        }
+      "agents": ${builtins.toJSON agents},
+      "commands": ${builtins.toJSON commands},
+      "providers": {"openai": {"models": {"${model}": {
+        "settings": {"reasoningEffort": "high", "textVerbosity": "low"},
+        "variants": [
+          {"id": "economy", "settings": {"reasoningEffort": "low"}},
+          {"id": "balanced", "settings": {"reasoningEffort": "medium"}},
+          {"id": "deep", "settings": {"reasoningEffort": "high"}}
+        ]
       }}}},
-      "experimental": {"batch_tool": true},
+      "experimental": {"todo": true},
       "watcher": {"ignore": ["**/.opencode-tmp/**"]},
-      "permission": {
-        "*": "ask",
-        "read": {"*": "allow", "*.env": "deny", "*.env.*": "deny",
-          "**/.env": "deny", "**/.env.*": "deny",
-          "*.env.example": "allow", "**/.env.example": "allow",
-          "**/*credential*": "deny", "**/*secret*": "deny"},
-        "edit": {"*": "allow", "*.env": "deny", "*.env.*": "deny",
-          "**/.env": "deny", "**/.env.*": "deny",
-          "*.env.example": "allow", "**/.env.example": "allow",
-          "**/*credential*": "deny", "**/*secret*": "deny"},
-        "glob": "allow", "grep": "allow", "list": "allow",
-        "todowrite": "allow", "question": "allow",
-        "lsp": "allow",
-        "task": {"*": "deny", "explore": "allow", "review": "allow"},
-        "skill": {"*": "deny", "nix-validation": "allow",
-          "opencode-config-review": "allow", "exact-computation": "allow"},
-        "webfetch": "allow",
-        "external_directory": "ask", "doom_loop": "ask",
-        "bash": {
-          "*": "ask",
-          "git status*": "allow", "git diff*": "allow", "git log*": "allow",
-          "python": "allow", "python *": "allow",
-          "python3": "allow", "python3 *": "allow",
-          "pytest": "allow", "pytest *": "allow",
-          "rg *": "allow", "ls": "allow", "ls *": "allow",
-          "mkdir *": "allow", "mktemp": "allow", "mktemp *": "allow",
-          "nix eval *": "allow", "nix-instantiate --parse *": "allow",
-          "alejandra --check *": "allow",
-          "rm *": "deny", "sudo *": "deny", "git push*": "deny",
-          "git reset --hard*": "deny", "git clean*": "deny"
-        }
-      }
+      "permissions": ${builtins.toJSON permissions}
     }
   '';
   xdg.configFile."opencode/AGENTS.md".text = builtins.readFile ./instructions.md;
   xdg.configFile."opencode/skills/nix-validation/SKILL.md".text = builtins.readFile ./nix-validation.md;
   xdg.configFile."opencode/skills/opencode-config-review/SKILL.md".text = builtins.readFile ./opencode-config-review.md;
   xdg.configFile."opencode/skills/exact-computation/SKILL.md".text = builtins.readFile ./exact-computation.md;
-  # WebSockets are experimental. Opt out: OPENCODE_EXPERIMENTAL_WEBSOCKETS=false opencode
   # Scratch opt-out: OPENCODE_WORKSPACE_TMP=0 opencode
-  # LSP query opt-out: OPENCODE_EXPERIMENTAL_LSP_TOOL=false opencode
-  # Built-in language support stays enabled; missing servers must be supplied locally.
+  # V2 has no LSP tools; use targeted lint/typecheck/compiler commands instead.
   # Delete old .opencode-tmp sessions only after processes exit; exclude from backups.
   # Project instructions/config remain active. No credentials belong in this file.
 }

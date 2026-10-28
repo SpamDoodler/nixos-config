@@ -6,7 +6,7 @@
   # Bootloader.
   boot = {
     kernelModules = ["amdgpu" "kvm-amd"];
-       
+
     kernelPackages = pkgs.linuxPackagesFor pkgs.linuxKernel.kernels.linux_testing;
 
     kernel.sysctl = {
@@ -21,7 +21,6 @@
     loader.systemd-boot.enable = true;
     loader.efi.canTouchEfiVariables = true;
 
-    initrd.systemd.enable = true;
     initrd.availableKernelModules = ["amdgpu" "ext4"];
 
     extraModprobeConfig = ''

@@ -4,7 +4,6 @@
   ...
 }: {
   home.packages = with pkgs; [
-    aider-chat
     swaybg
     oh-my-zsh
     dosbox-staging
@@ -30,7 +29,6 @@
     signal-desktop
     ueberzugpp
     imagemagick
-    seafile-client
     zoom-us
   ];
 
