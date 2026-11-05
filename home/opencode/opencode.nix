@@ -215,6 +215,11 @@
         TMPDIR="$(mktemp -d "$root/s-XXXXXXXX")"
         export TMPDIR TMP="$TMPDIR" TEMP="$TMPDIR"
       fi
+      # Keep the credential scoped to OpenCode and its children.
+      if [[ -z "''${DEEPSEEK_API_KEY:-}" && -r "$HOME/.deepseek_key" ]]; then
+        DEEPSEEK_API_KEY="$(cat -- "$HOME/.deepseek_key")"
+        export DEEPSEEK_API_KEY
+      fi
       exec ${pkgs.opencode}/bin/opencode "$@"
     '';
   };

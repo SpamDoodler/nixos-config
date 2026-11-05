@@ -18,9 +18,6 @@
       plugins = ["git" "z" "sudo" "colored-man-pages"];
       theme = "agnoster";
     };
-    initContent = ''
-      export DEEPSEEK_API_KEY=$(cat ~/.deepseek_key)
-    '';
   };
 
   home.sessionVariables = {

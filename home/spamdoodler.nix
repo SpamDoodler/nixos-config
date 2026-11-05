@@ -5,7 +5,6 @@
 
   imports = [
     ./alacritty.nix
-    ./dropbox.nix
     ./github.nix
     ./ghostty.nix
     ./hyprland/hyprland_hy_lua.nix
@@ -13,6 +12,7 @@
     ./nvim/nvim.nix
     ./opencode/opencode.nix
     ./packages.nix
+    ./security.nix
     ./shell.nix
     ./starship.nix
     ./sway/sway.nix

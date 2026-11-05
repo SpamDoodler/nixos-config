@@ -13,6 +13,9 @@ end
 
 hl.bind("SUPER + SHIFT + Q", hl.dsp.window.close())
 
+-- SUPER + L is hy3 focus-right, so the session lock lives on ESCAPE.
+hl.bind("SUPER + ESCAPE", hl.dsp.exec_cmd("loginctl lock-session"))
+
 dispatch("SUPER + H", "hy3:movefocus", "l")
 dispatch("SUPER + L", "hy3:movefocus", "r")
 dispatch("SUPER + K", "hy3:movefocus", "u")
@@ -78,4 +81,5 @@ hl.bind("SUPER + SHIFT + 0", hl.dsp.window.move({ workspace = 10 }))
 hl.on("hyprland.start", function()
   hl.exec_cmd("waybar -c $HOME/.config/waybar/hyprland.json")
   hl.exec_cmd("fcitx5 -d")
+  hl.exec_cmd("mako")
 end)

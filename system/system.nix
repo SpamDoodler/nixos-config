@@ -9,6 +9,7 @@
     ./networking.nix
     ./nix.nix
     ./locals.nix
+    ./patches.nix
     ./powerManagement.nix
     ./programs.nix
     ./services.nix

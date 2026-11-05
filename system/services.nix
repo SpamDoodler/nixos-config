@@ -29,65 +29,26 @@
 
   services.journald.settings.Journal = {
     Storage = "persistent";
-    RateLimitInterval="30s";
-    RateLimitBurst=1000;
+    SystemMaxUse = "1G";
+    RateLimitInterval = "30s";
+    RateLimitBurst = 1000;
   };
 
-  services.tor = {
-    enable = true;
-
-    # Disable GeoIP to prevent the Tor client from estimating the locations of Tor nodes it connects to
-    enableGeoIP = false;
-
-    torsocks.enable = true;
-
-    # Enable the Tor client
-    client = {
-      enable = true;
-    };
-
-    # Configure Tor settings
-    settings = {
-      Nickname = "SpamDoodler";
-      ContactInfo = "doodler.spammail@gmail.com";
-
-      # Bandwidth settings
-      MaxAdvertisedBandwidth = "100 MB";
-      BandWidthRate = "50 MB";
-      RelayBandwidthRate = "50 MB";
-      RelayBandwidthBurst = "100 MB";
-
-      # Restrict exit nodes to a specific country (use the appropriate country code)
-      ExitNodes = "{ch} StrictNodes 1";
-
-      # Reject all exit traffic
-      ExitPolicy = ["reject *:*"];
-
-      # Performance and security settings
-      CookieAuthentication = true;
-      AvoidDiskWrites = 1;
-      HardwareAccel = 1;
-      SafeLogging = 1;
-      NumCPUs = 3;
-
-      # Network settings
-      ORPort = [443];
-    };
-  };
-
-  # Operating a Snowflake proxy helps others circumvent censorship. Safe to run.
-  services.snowflake-proxy = {
-    enable = true;
-    capacity = 10;
-  };
-
-  # Enable the OpenSSH daemon.
+  # Enable the OpenSSH daemon. Key-only access for the local user.
   services.openssh = {
     enable = true;
-  };
-
-  services.ollama = {
-    enable = true;
+    openFirewall = false;
+    settings = {
+      PasswordAuthentication = false;
+      KbdInteractiveAuthentication = false;
+      PermitRootLogin = "no";
+      AllowUsers = ["spamdoodler"];
+      X11Forwarding = false;
+      AllowAgentForwarding = false;
+      AllowTcpForwarding = "no";
+      MaxAuthTries = 3;
+      LoginGraceTime = 30;
+    };
   };
 
   services.fwupd.enable = true;
@@ -112,6 +73,7 @@
 
   # Wayland related
   security.polkit.enable = true;
+  security.pam.services.hyprlock = {};
 
   services.resolved = {
     enable = false;
