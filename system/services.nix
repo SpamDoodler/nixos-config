@@ -68,8 +68,10 @@
     alsa.enable = true;
     alsa.support32Bit = true;
     pulse.enable = true;
-    jack.enable = true;
   };
+  # Opt JACK clients in with `pw-jack COMMAND`, rather than injecting
+  # PipeWire's JACK libraries into every process via LD_LIBRARY_PATH.
+  environment.systemPackages = [config.services.pipewire.package.jack];
 
   # Wayland related
   security.polkit.enable = true;

@@ -24,7 +24,6 @@
     supercollider
     lilypond
     lie
-    rainloop-standard
     pre-commit
     signal-desktop
     ueberzugpp

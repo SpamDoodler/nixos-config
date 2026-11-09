@@ -1,7 +1,85 @@
 # Tools and workflow
 
-Priority: **P2**. These are introductions, not requirements. Add a tool only
-if the example replaces something you already do manually.
+Priority: **P1/P2**. AI/research tooling is a planned follow-on to Neovim;
+other CLI suggestions remain optional. Add tools in measured stages rather
+than deploying every candidate at once.
+
+## AI and research tool rollout
+
+User direction (2026-11-09): use AI tooling on this system, with Neovim and AI
+integration as the next main target. This section records intended pilots,
+not verified upstream feature claims or approval to run repository-wide scans.
+Use [`nvim.md`](nvim.md) for editor integration and [`opencode.md`](opencode.md)
+for agent/credential boundaries.
+
+### Stage 1 — editor workflow
+
+OpenCode agent integration + Minuet direct API completions + Git/diff review.
+No new subscription and no mandatory Nixvim migration. Finish this stage before
+adding multiple retrieval systems; ordinary source search remains the baseline.
+
+### Stage 2 — persistent research context
+
+| Candidate | Intended role | Pilot / adoption gate |
+|---|---|---|
+| Graphify | Navigable relationships across code and research documents | One project; inspect exact extraction, provenance, freshness, language support, and token cost |
+| QMD | Passage retrieval over research notes and diaries | Compare with `rg`; verify packaging, local model downloads, RAM/storage, and NixOS runtime |
+| Beads | Persistent tasks and blockers | One project's unresolved questions; test worktree/Git behavior and current database/service requirements |
+| Zotero CLI or MCP integration | Bibliography, annotations, and paper access | Identify the actual maintained integration; start read-only against a backed-up library |
+
+The previous package inspection found `pkgs.graphify` and `pkgs.beads`, but not
+`pkgs.qmd`; recheck the current lock before implementation. A package's existence
+does not guarantee optional PDF/MCP/model backends are included. Verify exact
+CLI flags, skill installation paths, and OpenCode compatibility from the pinned
+source. Do not run installer commands that overwrite project instructions or
+the managed OpenCode configuration. Package missing tools reproducibly or use
+a pinned project environment, not global npm/uv installs.
+
+Adopt tools incrementally, one measured pilot at a time. Graphify's semantic
+document extraction may incur model calls; neither its output nor inferred
+relationships establish mathematical validity. Indexes are disposable derived
+data, not authoritative research memory. Preserve source paths and revisions,
+refresh after changes, and test deletion/staleness behavior.
+
+Keep authoritative LaTeX, diaries, and explicit claim records in project Git:
+statement, hypotheses, status (proved/conditional/computationally checked/
+conjectural/refuted/superseded), source reference, and dependencies. Distinguish
+retrieved facts from model inference. Do not claim native LaTeX extraction or
+exact equation fidelity without testing it; convert selectively if needed.
+
+### Stage 3 — specialist capabilities, only when needed
+
+- arXiv retrieval and PaperQA2 for literature search and cited evidence;
+  verify exact source versions, equation transcription, and provider support.
+- Serena for symbol navigation in supported implementation languages; evaluate
+  separately for Nix/LaTeX instead of assuming every language is supported.
+- Context7 for current programming documentation and Repomix for explicit
+  portable snapshots; review what content leaves the project.
+- Lean integration for selected formalizable claims, with actual compiler
+  checks; a successful numerical calculation is not a general proof.
+- Marker if PDF extraction is a demonstrated bottleneck; assess local resource
+  cost and equation quality before indexing a large library.
+- Use existing OpenCode agents/skills before adding another orchestration layer.
+  LiteLLM, GPT Researcher, Graphiti, and automatic network routing remain later
+  candidates, not default services.
+
+### Installation, privacy, and acceptance
+
+- [ ] Inventory current package versions and plugin/CLI compatibility; pin every
+      installed component and record its owner (Home Manager vs project devShell).
+- [ ] Pick one research project and explicit included paths. Exclude credentials,
+      `.opencode-tmp`, private journals, generated output, and third-party corpora
+      unless deliberately included. Review whether extracted snippets leave disk.
+- [ ] Check OS sandbox access to project indexes, model caches, tool state, and
+      read-only Zotero access; do not expose the entire home directory.
+- [ ] Prefer CLI + on-demand skills when sufficient. Enable MCP servers only
+      for workflows that need them; measure schema/context overhead too.
+- [ ] Benchmark project-state reconstruction, exact literature lookup, and a
+      cross-file proof audit against the plain OpenCode workflow. Count initial
+      indexing, reindexing, local model costs, and subsequent query costs.
+- [ ] Record source accuracy, missed hypotheses, task success, latency, tokens,
+      and cost; only expand after a useful pilot and a documented rollback.
+- [ ] Document state locations, rebuild/reindex procedure, and what needs backup.
 
 ## Install map
 

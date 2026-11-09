@@ -3,7 +3,12 @@
   config,
   lib,
   ...
-}: {
+}: let
+  kernelBool = value:
+    if value
+    then "1"
+    else "0";
+in {
   options = {
     # Define the options for rtw89_pci module
     hardware.enableRtw89Pci = lib.mkEnableOption "Enable rtw89_pci module";
@@ -36,9 +41,9 @@
 
     # Specify module options using boot.kernelParams
     boot.kernelParams = [
-      "rtw89_pci.disable_clkreq=${toString config.hardware.rtw89PciOptions.disable_clkreq}"
-      "rtw89_pci.disable_aspm_l1=${toString config.hardware.rtw89PciOptions.disable_aspm_l1}"
-      "rtw89_pci.disable_aspm_l1ss=${toString config.hardware.rtw89PciOptions.disable_aspm_l1ss}"
+      "rtw89_pci.disable_clkreq=${kernelBool config.hardware.rtw89PciOptions.disable_clkreq}"
+      "rtw89_pci.disable_aspm_l1=${kernelBool config.hardware.rtw89PciOptions.disable_aspm_l1}"
+      "rtw89_pci.disable_aspm_l1ss=${kernelBool config.hardware.rtw89PciOptions.disable_aspm_l1ss}"
     ];
   };
 }

@@ -20,6 +20,10 @@ at `/home/spamdoodler/nixos` and the host is `NixSama`.
 
 ## Locked decisions
 
+- **Bleeding edge takes priority over tidiness.** Improve cleanliness, best
+  practice, and maintainability through clear ownership, reproducible checks,
+  and short-lived workarounds—not a stable-channel migration or unnecessary
+  abstractions. See `maintainability.md` for the 2026-11-09 repository audit.
 - **No LUKS/FDE for now.** Recovery risk is unacceptable. Mitigate with a lock
   screen, BIOS password, encrypted backups, minimal secrets on disk, and a
   documented recovery plan.
@@ -33,8 +37,9 @@ at `/home/spamdoodler/nixos` and the host is `NixSama`.
 - **Remove Tor, Snowflake, Ollama, Docker, Podman, thermald, Dropbox** unless a
   concrete use is found.
 - **Do not delete `hyprland_hy3.nix`.** It is the fallback when hy3 breaks.
-- **Do not implement Nvim recommendations yet.** They are deferred to
-  `nvim.md`.
+- **Neovim is the next work target**, with AI integration a main objective
+  (2026-11-09). Keep the existing Nix-managed editor; see `nvim.md` for staged
+  implementation and verification. This does not approve unrelated changes.
 
 ## Files
 
@@ -47,16 +52,23 @@ at `/home/spamdoodler/nixos` and the host is `NixSama`.
 | [`desktop-hyprland.md`](desktop-hyprland.md) | Hyprland vs alternatives, hy3, wofi, screenshots, plumbing, Waybar | P1/P2 |
 | [`wallpapers.md`](wallpapers.md) | clean rotation, multi-monitor, state, tests | P2 |
 | [`shell.md`](shell.md) | zsh/Starship/`nix develop`, AI, completions, aliases | P1/P2 |
-| [`nvim.md`](nvim.md) | deferred Neovim redesign | P2 |
+| [`nvim.md`](nvim.md) | next target: editor foundation, OpenCode, AI completions and diff review | P1 |
 | [`fonts.md`](fonts.md) | duplicate fonts, CJK choice, fallbacks | P1 |
 | [`packages.md`](packages.md) | system/home split, removals, replacements, kernel/NTFS | P1 |
 | [`backup.md`](backup.md) | restic/rustic design, destinations, restore drills | P0 |
 | [`maintenance.md`](maintenance.md) | smartd, locate, journald, checks, README, reliability | P1 |
-| [`tools.md`](tools.md) | nh, atuin, tealdeer, dust, sd, xh, hyperfine, jless, just, typos, uv, plocate | P2 |
+| [`maintainability.md`](maintainability.md) | repository hygiene, ownership, tests and bleeding-edge upgrade policy | P1/P2 |
+| [`tools.md`](tools.md) | CLI tools and phased AI/research tooling rollout | P1/P2 |
 
-These 13 topic files plus this index make up the 14 files in `docs/todos/`.
+These 14 topic files plus this index make up the 15 files in `docs/todos/`.
 
 ## Recommended order
+
+**Current next batch:** Neovim foundation and AI integration (`nvim.md`), then
+research-tool pilots (`tools.md`). Apply `maintainability.md` throughout, without
+turning editor work into a whole-repo rewrite. The risk-priority list remains useful,
+but does not override this chosen work order. Key rotation and backups remain
+unresolved security/data-loss priorities; they are not marked complete.
 
 1. **Stop the bleeding:** rotate keys, `chmod 600`, remove global key export,
    harden SSH, remove `docker` group, add lock/idle.
@@ -69,7 +81,7 @@ These 13 topic files plus this index make up the 14 files in `docs/todos/`.
 5. **Comfort:** `nh`, screenshots, Waybar modules, shell AI/completions,
    launcher, wallpaper refactor.
 6. **Durability:** backups, smartd, locate, journald cap, checks, README.
-7. **Deferred:** Neovim redesign and any compositor migration trial.
+7. **Deferred:** any compositor migration trial.
 
 ## Open decisions
 

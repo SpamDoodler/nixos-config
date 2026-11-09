@@ -12,5 +12,5 @@ in {
   hyprlandRotation = packageScript "desktop-hyprland-wallpapers" [pkgs.coreutils pkgs.findutils pkgs.hyprland] ../scripts/hyprback.sh;
   swayRotation = packageScript "desktop-sway-wallpapers" [pkgs.coreutils pkgs.findutils pkgs.sway] ../scripts/wallpapers.sh;
   wallpaperToggle = packageScript "desktop-wallpaper-toggle" [pkgs.coreutils pkgs.findutils pkgs.hyprland] ../scripts/set_wallpapers.sh;
-  waybarToggle = packageScript "desktop-waybar-toggle" [pkgs.procps pkgs.waybar] ../scripts/waybar.sh;
+  waybarToggle = packageScript "desktop-waybar-toggle" [pkgs.coreutils pkgs.procps pkgs.waybar] ../scripts/waybar.sh;
 }

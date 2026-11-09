@@ -1,5 +1,5 @@
 # Sandboxed smoke tests: commands are mocked, never connected to a live desktop.
-# Run: nix build --no-link --impure --expr 'let f = builtins.getFlake (toString ./.); in import ./tests/desktop-scripts.nix { pkgs = f.nixosConfigurations.NixSama.pkgs; }'
+# Run: nix build --no-link .#checks.x86_64-linux.desktop-scripts
 {pkgs}: let
   mockCommand = pkgs.writeShellScript "desktop-mock-command" ''
     command="''${0##*/}"
@@ -23,6 +23,13 @@
     pkgs =
       pkgs
       // {
+        # These commands must be mocks, not just earlier PATH entries ahead of
+        # real desktop packages. Unit tests need no compositor/Waybar closure.
+        hyprland = mocks;
+        sway = mocks;
+        procps = mocks;
+        waybar = mocks;
+        # Override coreutils' sleep too, so rotators stop after one iteration.
         writeShellApplication = args:
           pkgs.writeShellApplication (args // {runtimeInputs = [mocks] ++ args.runtimeInputs;});
       };
@@ -84,13 +91,14 @@ in
         commands, _ = run("SWAY_ROTATION", expected=-signal.SIGTERM)
         assert commands == [f"swaymsg output '*' bg {sway}/image.jpg fill", "sleep 30"], commands
 
+        process_match = rf"-u {os.getuid()} -x waybar|\.waybar-wrapped"
         for compositor in ("hyprland", "sway"):
             commands, _ = run("WAYBAR_TOGGLE", compositor)
             assert commands == [
-                "pgrep -x waybar", f"waybar -c {home}/.config/waybar/{compositor}.json",
+                f"pgrep {process_match}", f"waybar -c {home}/.config/waybar/{compositor}.json",
             ], commands
             commands, _ = run("WAYBAR_TOGGLE", compositor, extra_env={"MOCK_BAR_RUNNING": "1"})
-            assert commands == ["pgrep -x waybar", "pkill -x waybar"], commands
+            assert commands == [f"pgrep {process_match}", f"pkill {process_match}"], commands
 
         for args in ((), ("invalid",)):
             commands, result = run("WAYBAR_TOGGLE", *args, expected=2)

@@ -3,6 +3,10 @@
 Priority: **P1**. Small, boring changes that prevent a full disk, a lost
 generation, or a silent service failure.
 
+For repository structure, ownership, test coverage, and bleeding-edge upgrade
+hygiene, see the evidence-led audit in [`maintainability.md`](maintainability.md).
+This file remains focused on operational reliability.
+
 ## Current state
 
 | Item | Current | File |

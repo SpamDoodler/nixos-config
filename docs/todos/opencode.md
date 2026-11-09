@@ -270,6 +270,34 @@ Permission tests (manual, in a scratch repo):
 - With `--auto`, repeat the above inside the sandbox; verify the sandbox, not
   just the permission prompt.
 
+## 7. Editor and research tool boundaries
+
+Neovim AI integration is the next target; see [`nvim.md`](nvim.md). Research
+retrieval/task tooling follows in [`tools.md`](tools.md#ai-and-research-tool-rollout).
+The current-state notes above are historical audit observations, not a fresh
+version or credential inventory. Recheck effective configuration before changes;
+do not dump keys into logs while inspecting it.
+
+- [ ] Verify the pinned editor plugin's compatibility with the installed CLI or
+      ACP protocol, without replacing the existing wrapper with an unprotected
+      binary or loosening permissions.
+- [ ] Confirm which server/session the editor uses, its workspace root and
+      environment, and whether agent edits require permission or happen directly.
+- [ ] Treat direct completion credentials as a separate narrowly scoped client.
+      Do not globally export the OpenCode-only DeepSeek key. Prefer a separate
+      restricted provider key if available; otherwise approve and document
+      intentional credential sharing and its filesystem/process exposure.
+- [ ] Confirm a protected credential-helper/file path works with the pinned
+      completion plugin. Keep secrets out of Nix-generated Lua, arguments,
+      request logs, and project indexes; never assume auth-store interoperability.
+- [ ] Pin/review research-tool packages and generated skills. MCP servers are
+      executable code, not passive context; keep integrations opt-in and limit
+      library/index access instead of granting all of home.
+- [ ] Preserve the read-only explore/review roles. Add specialist agents only
+      for a measured independent task, not a permanent five-agent fan-out.
+- [ ] Test explicit proxy settings and loopback exclusions. Document persistent
+      service environment behavior before implementing direct-first fallback.
+
 ## Open questions
 
 - Which provider/model should be the default? DeepSeek, Aliyun, OpenAI, or a

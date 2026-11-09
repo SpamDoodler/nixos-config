@@ -1,8 +1,28 @@
 # Neovim
 
-Priority: **P2, deferred**. Do not implement these recommendations yet. This
-file records the current design, the concrete bugs, and a menu of clean
-replacements for a later pass.
+Priority: **P1, next work target** (user direction, 2026-11-09). AI integration
+is a main objective alongside a reliable coding and mathematical-writing
+environment. This is the implementation plan, not permission to activate a
+configuration or install every candidate below.
+
+## Scope and rollout
+
+- Keep the existing Home Manager `programs.neovim` + Lua structure. Nixvim is
+  not currently used; a migration is unnecessary for AI integration.
+- Keep plugins and runtime dependencies pinned through Nix. No lazy.nvim,
+  Mason downloads, `npm install -g`, or `uv tool install` as the deployment path.
+- Preserve VimTeX, texlab, SuperCollider integration, and normal offline editing.
+- Use OpenCode as the initial coding agent and existing API providers for
+  completions: no additional Copilot subscription, local model service, or
+  replacement agent backend is required.
+- Implement in separately verified batches: editor foundation → OpenCode
+  integration → direct API completions → research retrieval tools. See
+  [`tools.md`](tools.md#ai-and-research-tool-rollout).
+- Recommendations and example APIs below must be checked against the pinned
+  packages when implementation starts; they are not tested configuration.
+- Apply [`maintainability.md`](maintainability.md): one owner per editor action,
+  upgrade checks, small Lua modules, and behavior-preserving cleanup before AI
+  additions. Bleeding-edge features remain the higher priority.
 
 ## Current state
 
@@ -76,7 +96,7 @@ replacements for a later pass.
 15. **No Nix/Lua LSP.** For a NixOS repo, `nixd` (or `nil`) and `lua_ls` are
     more useful than another Python linter.
 
-## Target design (for the later pass)
+## Target design
 
 Keep the Nix-managed plugin model. Do **not** add `lazy.nvim` or Mason; both
 move plugin/server installation out of the Nix store.
@@ -255,7 +275,95 @@ installed.
 - Keep `lua/plugins/{lsp,completion,treesitter,vimtex}.lua` only if the
   corresponding plugins remain.
 
-## Tasks (deferred)
+## AI integration (main target)
+
+### Coding agent, inline requests, and review
+
+Start by evaluating `nickjvandyke/opencode.nvim` against the installed OpenCode
+version. It is the first candidate, not a compatibility guarantee. Inspect the
+pinned plugin's protocol, dependencies, and documented Lua API before writing
+configuration. If incompatible, evaluate a pinned compatible revision or
+CodeCompanion/Avante ACP support; install only one agent UI. A terminal split
+running the existing OpenCode wrapper remains the fallback.
+
+Required interactions:
+
+- Toggle agent chat/terminal and continue a project session.
+- Send a visual selection, buffer, or diagnostics explicitly; show what context
+  is being sent. Never upload an entire project by default.
+- Request edits to a selection and multi-file agent changes. An inline edit
+  request is distinct from automatic ghost-text completion; verify whether the
+  chosen UI edits buffers or disk, including behavior with unsaved buffers.
+- Review changes using Git hunks and a diff UI (Diffview is a candidate).
+  Keep a documented undo/revert path. Post-edit Git review is not pre-edit
+  permission approval; do not promise an approval dialog for auto-allowed edits.
+- Keep the existing OpenCode wrapper and sandbox protections. Do not call a
+  raw binary to bypass them or start unrestricted agents inside the editor.
+
+Reserve `<leader>a` for AI actions. Proposed suffixes: `t` toggle, `a` ask,
+`e` selection edit, `r` review selection, `f` diagnostics, `d` Git diff review,
+`c` completion toggle. Audit current maps and terminal key encoding before
+assigning bindings; these are target actions, not verified plugin commands.
+
+### Automatic completions
+
+Evaluate Minuet with an existing OpenAI-compatible provider. Verify the actual
+endpoint, supported model, streaming/request schema, and billing entitlement;
+sharing a provider with OpenCode does not imply its auth store or coding-plan
+quota can be reused by a direct HTTP client.
+
+- Start with manual triggering, then enable automatic completion for selected
+  code filetypes after measuring latency and cost. LaTeX/Markdown can be opted
+  in explicitly for research writing, not silently excluded forever.
+- Set debounce, bounded context/output, and a request timeout using options
+  actually supported by the pinned plugin. Avoid full manuscripts as context.
+- Provide separate accept-full, accept-line, dismiss, cycle, trigger, and toggle
+  bindings; avoid collisions with snippets, LSP completion, and terminal Alt keys.
+- Keep LSP/snippet completion useful without network access. Do not install
+  competing AI completion engines or send requests for every keystroke.
+- Block secrets, `.env`, credential buffers, and explicitly private files from
+  completion requests. Disabling suggestions visually must also stop requests.
+
+### Credentials, network, and token budget
+
+Minuet is a separate client, not a consumer of OpenCode's credential database.
+Design its credential lookup with [`opencode.md`](opencode.md#7-editor-and-research-tool-boundaries).
+Prefer a protected file or narrow credential helper over globally exported keys.
+Do not export `DEEPSEEK_API_KEY` to all of Neovim simply to enable completions;
+that changes the existing OpenCode-only secret boundary. Never embed secrets
+in generated Lua, Nix derivations, Git, logs, or command-line arguments.
+
+Keep the agent's loopback connection direct (`NO_PROXY`/`no_proxy` for localhost,
+127.0.0.1, and ::1). First test an explicit working HTTP proxy. A direct-first
+launcher with bounded probes and an optional interactive fallback is a later
+convenience feature, not a prerequisite. No automatic sing-box deployment.
+Account for OpenCode's persistent service: a new editor's environment does not
+necessarily update an already-running server. Never silently replay a possibly
+completed agent request after a connection failure.
+
+Measure input/output tokens, cached tokens where reported, cost, latency, and
+task success separately for agent work and completions. Use provider usage
+records when available; a graph compression ratio is not an API cost measure.
+
+### AI acceptance checklist
+
+- [ ] Verify CLI/plugin compatibility and dependencies from pinned sources.
+- [ ] Implement one agent UI through the existing wrapper; test project root,
+      session reuse, unsaved buffers, and sandbox access to requested files.
+- [ ] Implement context-aware chat, selection edits, diagnostics, and diff review.
+- [ ] Add Minuet with existing-provider credentials outside the store and no
+      global secret export; test model/endpoint with a minimal paid request.
+- [ ] Test acceptance/dismissal and LSP/snippet/keymap coexistence.
+- [ ] Verify excluded buffers make no requests; inspect logs for secret leakage.
+- [ ] Test offline startup, failed authentication, timeout, proxy, and cancellation.
+- [ ] Confirm approval/denial behavior in a disposable project, without broadening
+      existing permissions to make the plugin appear to work.
+- [ ] Compare representative Nix, Python, and LaTeX tasks with/without AI;
+      record costs and missing usage data rather than guessing savings.
+- [ ] Build the candidate editor and run headless startup checks before activation;
+      interactive behavior and paid API calls require explicit manual testing.
+
+## Foundation tasks
 
 - [ ] Confirm `nvim --version` supports `vim.lsp.config`/`enable`.
 - [ ] Remove Mason plugins and all runtime server installation.
