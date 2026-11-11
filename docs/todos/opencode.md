@@ -4,7 +4,12 @@ Priority: **P0/P1**. OpenCode is the most powerful agent on the machine and the
 one most likely to touch secrets. The current permission model is useful but is
 not a sandbox.
 
-## Current state
+## Original audit snapshot (historical)
+
+The version, credential-file mode and provider observations below describe the
+original audit, not a fresh inventory. Current source additions are recorded in
+the dated progress section and Graphify section below. Do not infer live secrets
+or effective merged provider settings from this snapshot.
 
 - `home/opencode/opencode.nix` is the active Home Manager module.
 - `home/opencode/opencode_old.nix` is dead code (~319 lines).
@@ -33,6 +38,21 @@ not a sandbox.
 - Use Landlock where practical, plus bubblewrap/systemd hardening.
 - Only OpenCode needs the DeepSeek key. Do not export it globally.
 - Keep `--auto` as the explicit "overnight" switch, but only inside a sandbox.
+
+## Latest integration progress (2026-11-09)
+
+- Installed CLI reports OpenCode 2.2.5; the existing V2 version assertion remains.
+- `graphify` is a curated allowlisted skill with an explicit `/graphify` command.
+  The package/helper are Home Manager-owned; no upstream installer or MCP server
+  was added. See [`graphify.md`](graphify.md) for exact status and acceptance.
+- The single Graphify workflow discovers code/research inputs, preserves TeX and
+  unsupported text through `graphify-prepare`, and requires separate approval for
+  semantic extraction, backend/model, source transfer and cost.
+- Neovim now has namespaced modules, snippets and safe manual formatters. Those
+  are local editor capabilities, not an OpenCode editor integration. The agent UI,
+  Minuet and associated credential handling are still open in [`nvim.md`](nvim.md).
+- No additional agent roles, unrestricted shell permissions, automatic uploads,
+  provider credential reuse, or overnight-run sandbox guarantees were introduced.
 
 ## 1. Secrets and auth (P0)
 
@@ -272,8 +292,9 @@ Permission tests (manual, in a scratch repo):
 
 ## 7. Editor and research tool boundaries
 
-Neovim AI integration is the next target; see [`nvim.md`](nvim.md). Research
-retrieval/task tooling follows in [`tools.md`](tools.md#ai-and-research-tool-rollout).
+Neovim AI integration remains the next editor layer; see [`nvim.md`](nvim.md).
+Graphify CLI/skill integration has proceeded in parallel; research pilot gates
+are in [`graphify.md`](graphify.md), other candidates in [`tools.md`](tools.md#ai-and-research-tool-rollout).
 The current-state notes above are historical audit observations, not a fresh
 version or credential inventory. Recheck effective configuration before changes;
 do not dump keys into logs while inspecting it.
@@ -297,6 +318,27 @@ do not dump keys into logs while inspecting it.
       for a measured independent task, not a permanent five-agent fan-out.
 - [ ] Test explicit proxy settings and loopback exclusions. Document persistent
       service environment behavior before implementing direct-first fallback.
+
+## 8. Graphify integration status
+
+- [x] Package the CLI/helper declaratively and deploy the curated skill.
+- [x] Add `/graphify` and allow only the curated skill name; preserve ordered
+      permission arrays and read-only explore/review roles.
+- [x] Disable default query logging via the session setting/explicit recipes;
+      ignore graph outputs in Git and the OpenCode watcher.
+- [x] Add and run offline preparation tests (five passing tests).
+- [ ] Validate a representative approved semantic extraction and source-grounded
+      query cycle, including coverage, stale/deleted inputs and publication.
+- [ ] Validate optional DeepSeek package behavior and document patch lifecycle;
+      its SDK/parameter patches do not apply to the plain installed CLI.
+- [ ] Measure total tokens/cost/accuracy including initial indexing; do not claim
+      savings from a graph-output compression ratio.
+- [ ] Add deterministic helper checks to flake checks without paid API calls.
+
+The curated skill requires explicit consent before extraction; it is not a
+security sandbox or a guarantee of secret-free inputs. Graph results are data,
+not instructions or mathematical proof. See `graphify.md` rather than maintaining
+a second extraction recipe here.
 
 ## Open questions
 

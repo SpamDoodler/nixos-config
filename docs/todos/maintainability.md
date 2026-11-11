@@ -169,14 +169,22 @@ explicit `0`. Defaults are true; no current Wi-Fi failure was demonstrated.
 
 ### 5. Make the editor baseline smaller before adding AI (P1)
 
-**Evidence:** `home/nvim/nvim.nix:21–42` includes Mason, all Treesitter grammars,
+**Original audit evidence (superseded in part):** `home/nvim/nvim.nix:21–42` includes Mason, all Treesitter grammars,
 and multiple formatter/linter plugins; `:44–55` explicitly assembles Lua files.
 `lua/setup/gui.lua:15–18` and `lua/plugins/treesitter.lua:5–36` under `home/nvim/`
 both configure Treesitter, with conflicting regex highlighting choices.
 `lua/plugins/treesitter.lua:1` assigns a runtime parser installation directory.
 
-- [ ] Execute the foundation cleanup in `nvim.md` before adding AI dependencies:
-      one parser setup, one formatter owner, explicit snippets and server tools.
+- [x] Replace Lua concatenation with namespaced, store-backed native Lua modules.
+- [x] Remove `setup/gui.lua` and duplicate Treesitter setup; remove the runtime
+      parser install directory. Retain all grammars by explicit user choice.
+- [x] Scope editor tools to Neovim's wrapper; explicitly install/load LuaSnip with
+      separate Python/C++/LaTeX definitions and no duplicate mapping owner.
+- [x] Add safe manual Black/Alejandra/latexindent runners with repeat-run, undo,
+      no-save and failure-preservation tests (`tests/neovim-formatting.lua`).
+- [ ] Finish unused Mason/formatter/linter cleanup and decide whether a unified
+      formatter is needed; manual commands work and must not gain a second owner.
+- [ ] Wire editor and Graphify-helper regression suites into flake checks.
 - [ ] Validate plugin APIs against pinned source on upgrades; Nix pins a package,
       not the correctness of handwritten Lua options for that package.
 - [ ] Keep AI-specific Lua separate from core editing and fail gracefully when
@@ -184,13 +192,15 @@ both configure Treesitter, with conflicting regex highlighting choices.
 
 ### 6. Remove ambiguity, not useful fallback paths (P2)
 
-**Evidence:** `home/opencode/opencode_old.nix` (319 lines) and
+**Original audit evidence (superseded in part):** `home/opencode/opencode_old.nix` (319 lines) and
 `home/nvim/lua/init_old.lua` (36 lines) have no active references in the inspected
 modules. `home/nvim/lua/luasnip-snippets.lua` (100 lines) is absent from the
 explicit `initLua` assembly. Git already preserves historical versions.
 
-- [ ] Delete confirmed obsolete `_old` copies after checking import/source
-      references. Load and test the snippets or remove the unused file.
+- [x] Remove Neovim's unused `init_old.lua` and replace the old mixed snippet file
+      with loaded, tested filetype collections (`nvim.md`).
+- [ ] Delete remaining confirmed obsolete copies (including OpenCode's old module)
+      only after checking import/source references.
 - [ ] Maintain a short map of active entrypoints and intentional fallbacks;
       do not classify all unimported `.conf`/`.nix` files as dead automatically.
 - [ ] Do not delete `hyprland_hy3.nix` or Sway as part of dead-file cleanup.

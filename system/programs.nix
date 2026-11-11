@@ -21,64 +21,64 @@
 
   programs.zsh.enable = true;
   environment.systemPackages = with pkgs; [
-    unzip
-    p7zip
-    eza
-    starship
-    ripgrep
-    git
-    fd
-    fmt
-    git-lfs
-    jq
-    delta
-    grim # Wayland screenshot utility
     alacritty
-    kitty
+    alsa-utils
+    bat
     bottom
-    powertop
-    neovim
-    zathura
-    wget
+    cmake
     curl
+    cxxopts
+    delta
+    eza
     fastfetch
+    fd
+    feh
+    ffmpeg-full
+    fmt
+    fzf
+    gcc
+    ghostscript
+    git
+    git-lfs
+    gparted
+    gphoto2
+    gphoto2fs
+    graphviz
+    grim # Wayland screenshot utility
+    imagemagick
+    iw
+    jq
+    kitty
+    libinput
+    libtiff
+    linux-firmware
+    lm_sensors
+    ncdu
+    neovim
+    nmap
+    openconnect
+    openssl
+    p7zip
     pamixer
     paprefs
     pavucontrol
     pciutils
-    iw
-    linux-firmware
-    nmap
-    rsync
-    ffmpeg-full
-    lm_sensors
-    feh
-    gcc
-    cmake
-    cxxopts
     pkg-config
-    fzf
-    libinput
-    trash-cli
-    alsa-utils
-    gparted
-    gphoto2
-    gphoto2fs
-    libtiff
-    ncdu
-    bat
-    openconnect
-    openssl
-    graphviz
-    zgrviewer
-    ghostscript
-    smartmontools
-    wl-clipboard
-    zip
-    imagemagick
-    uutils-procps
+    powertop
     psmisc
+    ripgrep
+    rsync
+    smartmontools
+    starship
     tmux
+    trash-cli
+    unzip
+    uutils-procps
+    wget
+    wl-clipboard
+    zathura
+    zgrviewer
+    zip
   ];
 
   environment.variables.EDITOR = "nvim";

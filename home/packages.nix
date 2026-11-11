@@ -4,30 +4,31 @@
   ...
 }: {
   home.packages = with pkgs; [
-    swaybg
-    oh-my-zsh
-    dosbox-staging
-    google-chrome
-    texliveFull
-    mpv
     ani-cli
-    peerflix-server
-    osu-lazer-bin
-    inkscape
-    rawtherapee
-    libreoffice-qt
+    dosbox-staging
+    gap-full
+    google-chrome
     hunspell
     hunspellDicts.en-us
-    tor-browser
-    tdf
-    gap-full
-    supercollider
-    lilypond
-    lie
-    pre-commit
-    signal-desktop
-    ueberzugpp
     imagemagick
+    inkscape
+    libreoffice-qt
+    lie
+    lilypond
+    mpv
+    oh-my-zsh
+    osu-lazer-bin
+    peerflix-server
+    pre-commit
+    privoxy
+    rawtherapee
+    signal-desktop
+    supercollider
+    swaybg
+    tdf
+    texliveFull
+    tor-browser
+    ueberzugpp
     zoom-us
   ];
 

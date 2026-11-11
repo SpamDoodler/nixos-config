@@ -40,6 +40,11 @@ at `/home/spamdoodler/nixos` and the host is `NixSama`.
 - **Neovim is the next work target**, with AI integration a main objective
   (2026-11-09). Keep the existing Nix-managed editor; see `nvim.md` for staged
   implementation and verification. This does not approve unrelated changes.
+- **Keep all Treesitter grammars.** Neovim uses Nix-managed parsers; do not
+  reintroduce runtime parser installation or reduce grammars as cosmetic cleanup.
+- **Graphify uses one curated workflow** for code and research, including a
+  verbatim TeX/text adapter. Integration is implemented; project scope, semantic
+  backend/spending, and graph quality need explicit acceptance (`graphify.md`).
 
 ## Files
 
@@ -52,7 +57,8 @@ at `/home/spamdoodler/nixos` and the host is `NixSama`.
 | [`desktop-hyprland.md`](desktop-hyprland.md) | Hyprland vs alternatives, hy3, wofi, screenshots, plumbing, Waybar | P1/P2 |
 | [`wallpapers.md`](wallpapers.md) | clean rotation, multi-monitor, state, tests | P2 |
 | [`shell.md`](shell.md) | zsh/Starship/`nix develop`, AI, completions, aliases | P1/P2 |
-| [`nvim.md`](nvim.md) | next target: editor foundation, OpenCode, AI completions and diff review | P1 |
+| [`nvim.md`](nvim.md) | foundation/snippets/manual formatting implemented; editor AI and cleanup next | P1 |
+| [`graphify.md`](graphify.md) | installed OpenCode integration, TeX/text adapter, semantic extraction pilot and acceptance | P1 |
 | [`fonts.md`](fonts.md) | duplicate fonts, CJK choice, fallbacks | P1 |
 | [`packages.md`](packages.md) | system/home split, removals, replacements, kernel/NTFS | P1 |
 | [`backup.md`](backup.md) | restic/rustic design, destinations, restore drills | P0 |
@@ -60,12 +66,29 @@ at `/home/spamdoodler/nixos` and the host is `NixSama`.
 | [`maintainability.md`](maintainability.md) | repository hygiene, ownership, tests and bleeding-edge upgrade policy | P1/P2 |
 | [`tools.md`](tools.md) | CLI tools and phased AI/research tooling rollout | P1/P2 |
 
-These 14 topic files plus this index make up the 15 files in `docs/todos/`.
+These 15 topic files plus this index make up the 16 files in `docs/todos/`.
+
+## Latest progress (2026-11-09)
+
+- Neovim: namespaced store-backed Lua, one Treesitter setup with all grammars,
+  editor-scoped tool dependencies, explicit LuaSnip and 33 Python/C++/LaTeX
+  snippets, removal of old copies, and safe manual formatter commands.
+- Verification: candidate builds and isolated editor/formatter/snippet checks
+  passed during implementation. User reported `:ClangFormat` works; remaining
+  interactive LSP/snippet/VimTeX/scnvim checks are not silently marked complete.
+- Graphify: Home Manager CLI/helper, one allowlisted OpenCode skill/command,
+  allowlisted UTF-8/TeX preparation with source mapping/hashes, output exclusions,
+  and five passing helper tests. Optional DeepSeek flake package added in source;
+  representative semantic extraction and measured savings remain open.
+- No editor agent UI, Minuet completions, MCP service, automatic indexing, or
+  format-on-save was enabled by these changes.
 
 ## Recommended order
 
-**Current next batch:** Neovim foundation and AI integration (`nvim.md`), then
-research-tool pilots (`tools.md`). Apply `maintainability.md` throughout, without
+**Current next batch:** finish Neovim cleanup/language support, then editor AI
+integration (`nvim.md`). Run a scoped Graphify research pilot (`graphify.md`)
+alongside that work before adding more retrieval systems (`tools.md`). Apply
+`maintainability.md` throughout, without
 turning editor work into a whole-repo rewrite. The risk-priority list remains useful,
 but does not override this chosen work order. Key rotation and backups remain
 unresolved security/data-loss priorities; they are not marked complete.

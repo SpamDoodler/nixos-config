@@ -1,6 +1,3 @@
-require("nvim-treesitter.install").install_dir = vim.fn.stdpath("data") .. "/parsers"
-
-
 -- Treesitter configuration
 require("nvim-treesitter").setup {
   -- Enable syntax highlighting

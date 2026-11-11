@@ -32,5 +32,6 @@ cmp.setup({
     sources = {
         { name = "nvim_lsp" },  -- LSP completions
         { name = "luasnip" },   -- Snippets completions
+        { name = "path" },      -- Filesystem paths
     },
 })

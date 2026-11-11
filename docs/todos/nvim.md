@@ -1,6 +1,6 @@
 # Neovim
 
-Priority: **P1, next work target** (user direction, 2026-11-09). AI integration
+Priority: **P1, active work target** (user direction, 2026-11-09). AI integration
 is a main objective alongside a reliable coding and mathematical-writing
 environment. This is the implementation plan, not permission to activate a
 configuration or install every candidate below.
@@ -16,68 +16,88 @@ configuration or install every candidate below.
   completions: no additional Copilot subscription, local model service, or
   replacement agent backend is required.
 - Implement in separately verified batches: editor foundation → OpenCode
-  integration → direct API completions → research retrieval tools. See
-  [`tools.md`](tools.md#ai-and-research-tool-rollout).
+  integration → direct API completions. Graphify CLI/skill integration has
+  proceeded in parallel; its research pilot is tracked in [`graphify.md`](graphify.md).
 - Recommendations and example APIs below must be checked against the pinned
   packages when implementation starts; they are not tested configuration.
 - Apply [`maintainability.md`](maintainability.md): one owner per editor action,
   upgrade checks, small Lua modules, and behavior-preserving cleanup before AI
   additions. Bleeding-edge features remain the higher priority.
+- **Strict diagnostics are implemented in the candidate configuration**; keep
+  formatting separate from linting and validate project-specific overrides.
+
+## Progress snapshot (2026-11-09)
+
+- [x] Replace Lua concatenation with store-backed `require("nixsama.…")` modules.
+- [x] Remove `setup/gui.lua`, preserving nvim-tree/lualine/bufferline/font setup
+      in the appearance module; remove the duplicate Treesitter setup.
+- [x] Keep all Nix-managed grammars and remove the runtime parser install override.
+- [x] Move editor-owned binaries to Neovim's wrapper PATH; add Alejandra there.
+- [x] Explicit LuaSnip dependency and 33 lazy-loaded Python/C++/LaTeX snippets;
+      preserve completion mappings and replace the old mixed snippet file.
+- [x] Remove `init_old.lua` (confirmed absent in the working tree).
+- [x] Add safe manual `:Black`, `:Alejandra`, `:Latexindent` commands and formatter
+      regression tests. Existing `:ClangFormat` remains; user reported it works.
+- [x] First/second diagnostic batches: strict Python/C++/LaTeX/Nix/Lua tooling,
+      Nix-managed binaries, path completion, and reviewed fallback profiles.
+- [x] Gutter `E/W/I/H` signs, debounced mouse-hover messages, and explicit
+      `,af` / `:OpenCodeDiagnostic` preview with +/-2 source lines.
+- [x] Nix-managed LTeX+ spelling/grammar for TeX and Markdown, with manual
+      corrections and persistent project dictionaries/false-positive choices;
+      see [`SPELLCHECK.md`](../../home/nvim/SPELLCHECK.md).
+
+Candidate builds, isolated startup/tool lookup, snippet expansion/jump/mirror
+checks, Python parsing, representative C++/LaTeX compilation, and formatter
+repeat-run/undo/failure tests passed in the implementation sessions. Home Manager
+evaluation and Nix formatting checks also passed. These are not evidence that
+every latest change has been switched into the user's current editor process.
+Real language-server/linter diagnostic integration and mocked gutter/OpenCode
+tests passed. Interactive completion, terminal mouse reporting, and actual
+project workflows still need manual acceptance. No automatic format-on-save
+or automatic AI requests are enabled.
 
 ## Current state
 
 | Item | Current | File |
 |---|---|---|
-| Entry point | `programs.neovim` with `initLua` assembled from files | `home/nvim/nvim.nix:44-56` |
-| Aliases | `vi`, `vim`, `vimdiff` | `home/nvim/nvim.nix:13-15` |
-| Python/Ruby providers | disabled | `home/nvim/nvim.nix:17-18` |
-| LSP binaries | `black`, `clang-tools`, `pyright`, `rust-analyzer`, `texlab` | `home/nvim/nvim.nix:2-8` |
-| Plugins | nvim-tree, nightfox, lualine, cmp, treesitter, bufferline, mason, lspconfig, vimtex, scnvim | `home/nvim/nvim.nix:21-43` |
-| Treesitter | `withAllGrammars`, runtime `install_dir` | `home/nvim/nvim.nix:26`, `lua/plugins/treesitter.lua:1` |
-| Completion | `nvim-cmp` + `cmp_luasnip`; LuaSnip required | `lua/plugins/completion.lua` |
+| Entry point | `programs.neovim.initLua` requires `nixsama.*` modules; Home Manager deploys their directories under `nvim/lua/nixsama` | `home/nvim/nvim.nix` |
+| Aliases | `vi`, `vim`, `vimdiff` | `home/nvim/nvim.nix` |
+| Python/Ruby providers | disabled | `home/nvim/nvim.nix` |
+| LSP/formatter/linter binaries | `alejandra`, `black`, `clang-tools`, `deadnix`, `ltex-ls-plus`, `lua-language-server`, `nixd`, `pyright`, `ruff`, `rust-analyzer`, `selene`, `statix`, `texlab`; latexindent/ChkTeX supplied by existing TeX Live | `home/nvim/nvim.nix` |
+| Plugins | nvim-tree, nightfox, lualine, cmp, LuaSnip, treesitter, bufferline, lspconfig, nvim-lint, vimtex, scnvim; Mason/none-ls/vim-flake8 removed | `home/nvim/nvim.nix` |
+| Treesitter | Keep `withAllGrammars` by user choice; one setup, no runtime `install_dir` override | `home/nvim/nvim.nix`, `lua/plugins/treesitter.lua` |
+| Completion | `nvim-cmp` LSP/path/snippet sources + explicit LuaSnip; custom Python/C++/LaTeX collections lazy-loaded | `lua/plugins/{completion,snippets}.lua`; `home/nvim/SNIPPETS.md` |
 | LSP setup | `vim.lsp.config` / `vim.lsp.enable` | `lua/plugins/lsp.lua` |
-| Dead files | `init_old.lua`, `luasnip-snippets.lua` | `home/nvim/lua/` |
-| Formatter/linter | `black`, `vim-flake8`, `nvim-lint`, `none-ls` installed, no config | `nvim.nix:35-40` |
+| Removed files | `init_old.lua`, `luasnip-snippets.lua`, `setup/gui.lua` | `home/nvim/lua/` |
+| Formatter/linter | Manual `:Black`, `:Alejandra`, `:Latexindent`, and `:ClangFormat`; nvim-lint owns Statix/deadnix/Selene only, native LSP owns other diagnostics | `lua/core/formatting.lua`, `lua/plugins/{lint,lsp}.lua` |
 | File finder | none (only nvim-tree) | — |
 | Git integration | none | — |
 
 ## Concrete problems
 
-1. **Mason downloads at runtime.** `mason-nvim`, `mason-lspconfig`, and
-   `mason-null-ls` are in the plugin list (`nvim.nix:28-30`), but no
-   `require("mason").setup()` is loaded. They are dead weight; if enabled
-   later, Mason would download LSP servers outside Nix, breaking
-   reproducibility and offline builds.
-2. **LSP binaries are installed globally.** `pyright`, `clangd`,
-   `rust-analyzer`, and `texlab` are in `home.packages`, so every shell gets
-   them. Prefer `programs.neovim.extraPackages` to put them only in
-   Neovim's wrapper `PATH`.
-3. **Treesitter is configured twice.** `gui.lua:16-18` calls
-   `require("nvim-treesitter").setup`, then `plugins/treesitter.lua:1-42`
-   sets `install_dir` and calls setup again. The two options conflict
-   (`additional_vim_regex_highlighting` is `false` then `true`). Only one
-   setup should exist.
-4. **`install_dir` fights the Nix wrapper.** Nix-managed grammars live in the
-   plugin's own path. Pointing `nvim-treesitter.install` at
-   `stdpath("data")/parsers` can make it look for or try to install parsers
-   outside the store. Remove it; use the Nix-provided grammars.
-5. **`withAllGrammars` is huge.** It builds and installs every parser, which
-   is slow to build, large in the store, and unnecessary. Select the
-   languages you actually edit (Nix, Lua, Python, C/C++, Rust, LaTeX,
-   Markdown, Bash, JSON, YAML, TOML).
-6. **LuaSnip is not explicit.** `completion.lua` does
-   `require("luasnip")`, but the plugin list contains `cmp_luasnip`, not
-   `luasnip`. `cmp_luasnip` may propagate the dependency, but do not rely on
-   a transitive dependency; add `luasnip` explicitly or remove the snippet
-   integration.
-7. **Snippets are never loaded.** `lua/luasnip-snippets.lua` exists but is not
-   read by `initLua`; it is dead code. Either load it or delete it.
-8. **`init_old.lua` is dead.** It is not read by `nvim.nix`; delete it to
-   avoid confusing future edits.
-9. **Formatter/linter plugins are unconfigured.** `vim-flake8` needs
-   `flake8`, which is not installed; `nvim-lint` and `none-ls` have no setup;
-   `black` is installed but nothing invokes it. This is three half-solutions
-   for one problem.
+1. **Mason ownership resolved.** Mason integrations are removed; Nix owns tools.
+2. **Editor tool ownership resolved (2026-11-09).** Moved Black, clang-tools,
+   Pyright, rust-analyzer, and texlab into `programs.neovim.extraPackages`.
+   No other declared consumers/owners were found. A candidate build and isolated
+   smoke test verified tool lookup from store paths inside Neovim and no remaining
+   direct `home.packages` entries. Latest interactive activation is a separate check.
+3. **Duplicate Treesitter setup resolved (2026-11-09).** Removed `setup/gui.lua`;
+   appearance setup now lives in `setup/colorscheme.lua`. The plugin module
+   owns Treesitter's only setup. Namespaced `require` calls replace Lua source
+   concatenation. The candidate editor/config built and passed an isolated
+   headless smoke test; activation and interactive testing remain separate.
+4. **Runtime parser directory override removed.** Use Nix-provided parsers;
+   do not recreate `stdpath("data")/parsers` as an installation target.
+5. **Keep `withAllGrammars` (user decision).** Accept its build/download/storage
+   cost; all parsers are not automatically loaded into memory on startup.
+6. **LuaSnip dependency resolved.** It is explicitly listed alongside
+   `cmp_luasnip`; no reliance on a transitive dependency.
+7. **Custom snippets now loaded.** `plugins/snippets.lua` lazy-loads definitions
+   from `snippets/{cpp,python,latex}.lua`; `tex` includes `latex`. The old
+   mixed Go/C++ file was removed, with no duplicate Tab mappings or `_G` helpers.
+8. **Old init copy removed.** `init_old.lua` is absent; Git preserves its history.
+9. **Formatter/linter ownership resolved.** Keep manual formatter commands;
+   native LSP plus nvim-lint provide diagnostics. none-ls/vim-flake8 are removed.
 10. **`clipboard = "unnamedplus"` is unconditional.** On a headless/SSH
     session without `wl-copy`, yanks can hang or fail. Guard it on
     `WAYLAND_DISPLAY` and `executable("wl-copy")`.
@@ -93,15 +113,56 @@ configuration or install every candidate below.
     setup silently does nothing. On 0.11+, prefer an `LspAttach` autocmd for
     keymaps instead of relying on `on_attach` inside `vim.lsp.config`, whose
     support varies by version.
-15. **No Nix/Lua LSP.** For a NixOS repo, `nixd` (or `nil`) and `lua_ls` are
-    more useful than another Python linter.
+15. **Nix/Lua LSP resolved.** nixd and lua_ls are enabled and integration-tested.
 
 ## Target design
+
+### Plugin and snippet audit (2026-11-09)
+
+Inspected the pinned plugin entrypoints as well as our Lua configuration;
+configuration absence alone does not imply a plugin does nothing.
+
+This historical audit predates the diagnostic batches. Mason/none-ls/vim-flake8
+have since been removed; nvim-lint is now configured intentionally.
+
+| Component | Observed state at audit | Recommendation at audit |
+|---|---|---|
+| `mason-nvim` | `has_setup = false`; no configured package management | Remove; Nix already supplies editor tools |
+| `mason-lspconfig-nvim` | No setup call | Remove alongside Mason; keep `nvim-lspconfig` |
+| `mason-null-ls-nvim` | No setup call | Remove alongside Mason |
+| `nvim-lint` | Empty `linters_by_ft`; no `try_lint` calls/autocommands in our config | Remove or deliberately configure as sole linter runner |
+| `none-ls-nvim` | `_setup = false`; no configured sources | Remove unless selected as the formatting/linting bridge |
+| `vim-flake8` | Registers Python F7 and `:Flake`; `flake8` executable absent | Remove/replace after confirming F7 is not a wanted workflow |
+| `vim-clang-format` | Manual `:ClangFormat` available; automatic formatting off by default | Keep until deciding the C/C++ formatting workflow |
+| Black executable | Available inside Neovim; no configured automatic invocation | Retain pending formatter choice; moving it does not enable formatting |
+
+Mason installs/manages LSP servers, formatters, and linters at runtime. It is
+useful outside Nix but adds a second package owner here. Removing its integration
+plugins does not remove native Neovim LSP or Nix-managed server binaries.
+
+The initial audit found unused Go/C++ snippets in `lua/luasnip-snippets.lua`.
+That file is now replaced with 33 manual Python/C++/LaTeX snippets, explicitly
+requested for the user's actual languages. See `home/nvim/SNIPPETS.md` for
+triggers, mappings, and required LaTeX packages. Setup/loader code is separate
+from definitions; completion keeps ownership of Tab/Shift-Tab. LSP-provided
+snippet expansion remains supported through `luasnip.lsp_expand`.
+
+The candidate wrapper built and passed an isolated headless test with the user
+profile removed from PATH. All six commands (`black`, `clangd`, `clang-format`,
+`pyright-langserver`, `rust-analyzer`, `texlab`) resolved to store paths. The
+plugin states and absence of loaded custom snippets were checked at audit time;
+the later snippet implementation supersedes that state. No Mason/formatter/linter
+plugin was removed in that earlier foundation batch; see the current-state table
+for later diagnostic-batch changes.
 
 Keep the Nix-managed plugin model. Do **not** add `lazy.nvim` or Mason; both
 move plugin/server installation out of the Nix store.
 
 ### Minimal, coherent plugin set
+
+This table is a menu for later decisions, not a request to migrate every component.
+Keep nvim-cmp and nvim-tree for the present foundation/AI round. Conform, a new
+file finder, or a completion-engine migration is not already implemented.
 
 | Concern | Recommended | Alternative |
 |---|---|---|
@@ -189,17 +250,10 @@ works for every server that attaches.
 
 ### Treesitter
 
-```nix
-nvim-treesitter.withGrammars [
-  "bash" "c" "cpp" "json" "lua" "markdown" "nix"
-  "python" "rust" "toml" "vim" "vimdoc" "yaml" "latex"
-]
-```
-
-Verify the exact attribute name (`withGrammars` vs a function) against the
-pinned nixpkgs. Remove `install_dir` and the duplicate setup. Keep one setup
-call with `highlight.enable = true`, `indent.enable = true`, and
-`additional_vim_regex_highlighting = false`.
+Keep `nvim-treesitter.withAllGrammars` by user choice. The duplicate setup and
+runtime installation directory override are removed. Check the pinned API
+before changing highlighting/indentation options; parser selection is not a
+cleanup prerequisite.
 
 ### Options to fix
 
@@ -235,7 +289,37 @@ snippet and path sources. Test the Rust binary on this host before committing.
 
 ### Formatters and linters
 
-Use `conform.nvim`:
+#### Current manual commands
+
+`lua/core/formatting.lua` defines whole-buffer `:Black` (Python), `:Alejandra`
+(Nix), and `:Latexindent` (TeX/LaTeX). Each runs an argument-array subprocess
+without a shell, uses stdin, captures stdout/stderr separately, and replaces
+text only on success. They do not save or run automatically; `u` undoes the
+formatting. Repeating a command on already-formatted text creates no new edit.
+Wrong filetypes, nonmodifiable buffers, missing executables, formatter errors,
+and timeouts are reported without replacing the buffer. A result is discarded
+if the buffer changes during formatting. Named files use their directory as
+the formatter working directory; Black also receives `--stdin-filename`.
+
+`:Latexindent` uses the existing TeX Live installation, disables `indent.log`
+with `-g /dev/null`, and does not enable line-break rewriting (`-m`). C/C++
+retain the existing plugin's `:ClangFormat`. Raw `:%!formatter` filters are
+discouraged: failures or merged informational stderr can pollute buffer text.
+
+Regression test, with the candidate editor configuration loaded:
+
+```sh
+nvim --headless -c 'luafile tests/neovim-formatting.lua'
+```
+
+The test writes only to inherited `TMPDIR`; it checks real formatting, repeat
+runs, single-step undo, no automatic saves/project logs, and failure handling.
+
+#### Possible later unified integration
+
+If adopting `conform.nvim`, replace the manual runners rather than keeping two
+owners for the same formatting action. The following is a proposal, not active
+configuration; automatic formatting requires a separate user decision:
 
 ```lua
 require("conform").setup({
@@ -251,10 +335,117 @@ require("conform").setup({
 })
 ```
 
-Use `ruff` for Python lint/format instead of `vim-flake8` + `black` +
-`nvim-lint`. If you prefer `black`, keep `black` and use `ruff` only for
-linting. Remove `vim-flake8`; it is unmaintained and `flake8` is not
-installed.
+Keep Black as the current Python formatter unless a replacement is deliberately
+chosen. Ruff now owns Python linting and replaces the removed vim-flake8 plugin.
+
+#### Strict diagnostics (implemented candidate)
+
+The first two batches enable the following sources. Fallback profiles live in
+`home/nvim/diagnostic-defaults/`; configuration is native LSP plus nvim-lint.
+
+| Language | Diagnostic sources | Strictness/acceptance focus |
+|---|---|---|
+| Python | Pyright strict mode + Ruff | Type errors, unsafe/undefined usage, unused imports and reviewed broad lint rules; preserve Black formatting |
+| C++ | clangd + clang-tidy + project compiler warnings | Correct compile database and language standard; correctness/bug-prone checks and reviewed warning set |
+| LaTeX | texlab + ChkTeX | Compilation/reference diagnostics plus source lint; reviewed exceptions for project macros and intentional mathematical notation |
+| TeX/Markdown prose | LTeX+ (local LanguageTool) | Spelling and grammar, markup-aware parsing, explicit correction/dictionary actions; US English default |
+| Nix | nixd + Statix + deadnix | Evaluation/type feedback, static antipatterns and unused bindings; verify findings against module semantics |
+| Lua | lua-language-server + Selene | Neovim API-aware checking, undefined globals and static lint; declare `vim`/LuaJIT environment explicitly |
+
+Rules should be strict and actionable, not a blind “enable everything” switch:
+some rule families conflict or impose project-specific conventions. Keep
+project-local configuration for the actual Python version, C++ standard,
+dependencies and TeX macros. Document narrow exceptions with reasons; avoid
+blanket suppressions, duplicate diagnostics and warnings from vendored code.
+Whether warnings fail CI is a separate explicit project decision, not a global
+`-Werror` imposed on every dependency.
+
+No automatic destructive fixes, import removal, or format-on-save is enabled by
+this requirement. Complementary tools can coexist (e.g. Pyright types + Ruff
+lint), with one owner per diagnostic category and one chosen editor runner for
+each external tool. Prefer native LSP where appropriate; introduce nvim-lint or
+another bridge only for tools that need it. Do not add both none-ls and another
+runner for the same checks merely because both plugins are installed.
+
+- [x] Add reviewed strict fallback configurations and Nix-managed binaries.
+- [x] Configure editor diagnostics for Python/C++, LaTeX, Nix and Lua without
+      duplicating LSP/linter reports.
+- [x] Add representative known-bad and clean fixtures for each language; verify
+      both editor diagnostics and reproducible CLI results.
+- [ ] Check real project roots, compile databases, Python environments, and TeX
+      include/macro handling before suppressing apparent false positives.
+- [x] Replace/remove vim-flake8 or other existing lint components after the
+      replacement is working; keep existing formatting commands intact.
+
+**Policy and project overrides**
+
+- Python: Pyright strict type checking; Ruff reviewed lint families, no automatic
+  fixes/import organization/Ruff formatting. `pyrightconfig.json` or Pyright's
+  `pyproject.toml` section controls environments/types. Ruff's project config
+  wins over the managed fallback (`filesystemFirst`). This is a fallback, not
+  a forced overlay on a project's chosen rules.
+- C++: clangd uses the project's compilation database and standard. With no
+  database, fallback warning flags apply. The managed `clangd/config.yaml`
+  adds analyzer/bugprone/performance/portability and two modernization checks;
+  `FastCheckFilter: Strict` intentionally excludes slow clang-tidy checks.
+  `.clangd` `Diagnostics.ClangTidy.Remove` can narrow the managed Add list;
+  `.clang-tidy` alone cannot remove checks re-added by the user config. No `-Werror`.
+- LaTeX: texlab runs ChkTeX on edit/open/save, never automatic compilation.
+  Settings arrive asynchronously, so a first-open lint may require an edit/save.
+  ChkTeX uses texlab's project-root working directory; keep `.chktexrc` there
+  and use narrow macro/notation exceptions. Compile/reference data still depend
+  on the project's normal manual build/VimTeX workflow.
+- Nix: nixd owns parser/name/type feedback; overlapping unused-definition
+  diagnostics are suppressed in favor of deadnix. Statix uses nearest
+  `statix.toml`; deadnix 1.3.2 reads saved files only (save to refresh).
+- Lua: LuaLS uses LuaJIT and Neovim runtime types; Selene owns unused bindings
+  and undefined globals. Nearest `selene.toml` takes precedence; fallback
+  `lua51+vim` declares `vim`, `jit`, and `bit` without masking arbitrary globals.
+- nvim-lint runs on read/save/InsertLeave; `:Lint` is the manual fallback.
+  No checks mutate source. Dependencies/vendored code and real project roots
+  still need project-specific acceptance rather than blanket global suppression.
+
+**Gutter and OpenCode usage**
+
+Warnings/errors appear beside the line numbers (`W`/`E`; `I`/`H` for lower
+severities). Hover the gutter for a debounced message; this requires terminal
+mouse-move reporting. `,e` remains the keyboard popup fallback.
+
+On a diagnostic line, `,af` or `:OpenCodeDiagnostic` opens a preview containing
+all diagnostics on that line plus exactly two surrounding lines on either side,
+using unsaved buffer text. Check for secrets, then `s` sends; `q` cancels. The
+existing `opencode --agent review --prompt …` wrapper runs in a terminal split
+and asks for suggested fixes only. No automatic edits or requests occur.
+This is the limited diagnostic bridge, not a full inline-edit/completion UI.
+The payload/job invocation is tested with a mock; no paid inference was made.
+
+Regression suite (candidate config/plugins and wrapper tools must be loaded):
+
+```sh
+nvim --headless -c 'luafile tests/neovim-diagnostics.lua'
+nvim --headless -c 'luafile tests/neovim-formatting.lua'
+```
+
+Validation builds use a focused local-source flake import to include untracked
+files without staging them; ordinary Git-filtered flake builds need these files
+tracked first. No activation, lock update, or commit is part of this batch.
+
+#### Alphabetical lists: separate from Alejandra formatting
+
+The user requested alphabetical list ordering. Alejandra 4.1.0 has **no list-sort
+option**: its [versioned configuration](https://github.com/kamadorueda/alejandra/blob/4.1.0/src/alejandra/src/config.rs)
+supports indentation and bracket spacing only. A local stdin check confirmed
+that `["zebra" "apple" "middle"]` retains its order. Do not invent an option or
+silently add a sorting pass to `:Alejandra`.
+
+Nix list order can affect PATH precedence, permissions, plugin initialization,
+commands and fallback choices. Even package lists need review for ordering or
+collision assumptions. Alphabetizing must therefore be an explicit operation on
+a selected, reviewed list, preserving attached comments and item boundaries—not
+a whole-file textual sort.
+
+- [ ] Decide on a separate opt-in alphabetical package-list action or a reviewed
+      manual cleanup. Never automatically sort every Nix list during formatting.
 
 ### Keymaps and UX
 
@@ -267,11 +458,13 @@ installed.
 
 ### Dead files
 
-- Delete `home/nvim/lua/init_old.lua`.
-- Either load `home/nvim/lua/luasnip-snippets.lua` from `initLua` or delete
-  it.
+- `home/nvim/lua/init_old.lua` has been removed.
+- Old `home/nvim/lua/luasnip-snippets.lua` removed; definitions now live in
+  `lua/snippets/` and load via `lua/plugins/snippets.lua`.
 - Keep `lua/core/{options,autocommands,mappings}.lua` and
-  `lua/setup/{gui,colorscheme}.lua`; they are all loaded.
+  `lua/setup/colorscheme.lua`; these are loaded as namespaced modules.
+- `lua/setup/gui.lua` was removed; its appearance setup was preserved in
+  `lua/setup/colorscheme.lua`, and its duplicate Treesitter setup was dropped.
 - Keep `lua/plugins/{lsp,completion,treesitter,vimtex}.lua` only if the
   corresponding plugins remain.
 
@@ -365,35 +558,59 @@ records when available; a graph compression ratio is not an API cost measure.
 
 ## Foundation tasks
 
-- [ ] Confirm `nvim --version` supports `vim.lsp.config`/`enable`.
+- [x] Confirm Neovim 0.12.6 supports `vim.lsp.config`/`enable` in candidate checks.
+- [x] Deploy namespaced Lua modules and eliminate source concatenation.
 - [ ] Remove Mason plugins and all runtime server installation.
-- [ ] Remove `install_dir`; keep one treesitter setup; select grammars.
-- [ ] Add `luasnip` explicitly or remove snippet support.
-- [ ] Delete `init_old.lua`; load or delete `luasnip-snippets.lua`.
-- [ ] Move LSP/formatter binaries to `programs.neovim.extraPackages`.
-- [ ] Replace `vim-flake8`/`none-ls`/`nvim-lint` with one formatter and one
-      linter.
+- [x] Remove `install_dir`; keep one Treesitter setup; retain all grammars.
+- [x] Add `luasnip` explicitly and load Python/C++/LaTeX snippets without
+      conflicting keymaps.
+- [x] Replace the old mixed `luasnip-snippets.lua` file.
+- [x] Delete `init_old.lua`.
+- [x] Move LSP/formatter binaries to `programs.neovim.extraPackages`; build and
+      verify wrapper PATH (activation remains separate).
+- [ ] Implement strict diagnostic sources/rules and verify replacements before
+      retiring vim-flake8 or unused linting bridges; avoid duplicate runners.
 - [ ] Guard `clipboard`; scope `conceallevel`.
-- [ ] Add `nixd`, `lua_ls`, `ruff`, `stylua`, `alejandra`.
-- [ ] Choose `nvim-cmp` vs `blink.cmp`.
-- [ ] Choose `nvim-tree` vs `oil.nvim` vs `mini.files`.
+- [x] Add Alejandra to the editor wrapper and safe manual formatting commands.
+- [x] Build/run `tests/neovim-formatting.lua` against the isolated candidate.
+- [ ] Add Nix/Lua LSP setup (`nixd`, `lua_ls`) and their editor dependencies.
+- [ ] Enable the installed path-completion source; decide whether buffer completion
+      is useful before adding more sources.
+- [ ] Configure Ruff and the other strict diagnostic tools described above;
+      existing manual formatting is not a linting pipeline.
+- [ ] Decide separately whether StyLua or a unified formatting plugin is needed.
+- [ ] Keep nvim-cmp/nvim-tree for this round; revisit alternatives only on request.
 - [ ] Add `fzf-lua` (or Telescope) and `gitsigns`.
 - [ ] Benchmark startup with `nvim --startuptime`.
 - [ ] Run `:checkhealth` and fix only real errors.
+- [ ] Wire deterministic editor tests into flake checks; current formatter tests
+      are manual headless tests, not part of `nix flake check`.
+- [ ] Manually verify snippets, real LSP attachment, VimTeX and scnvim after
+      activating/restarting the editor; do not infer this from startup tests.
 
-## Verification (when the work starts)
+## Verification
 
 ```sh
 nvim --version | head -3
 nvim --headless "+checkhealth" +qa 2>&1 | tail -40
 nvim --headless "+LspInfo" +qa 2>&1 | head -60
-nvim --startuptime /tmp/nvim-start.log +qa
-sort -k2 -nr /tmp/nvim-start.log | head -20
+nvim --headless -c 'luafile tests/neovim-formatting.lua'
+nvim --startuptime "$TMPDIR/nvim-start.log" +qa
+sort -k2 -nr "$TMPDIR/nvim-start.log" | head -20
 ```
 
-Manual: open a Python file and confirm `gd`, `K`, rename, format-on-save, and
-completion; open a Nix file and confirm `nixd`; open a `.tex` file and confirm
-`vimtex` + `texlab`; open a SuperCollider file and confirm `scnvim`.
+Use a candidate/activated configuration containing the new modules; set TMPDIR
+to a writable scratch directory if it is not already defined. New flake source
+files must be Git-visible before a normal flake build. Candidate checks previously
+used an explicit local-source evaluation when new files were untracked; that is
+not the same as a standard Git-filtered flake build. Stage deliberately; never
+update the lock simply to expose new source files.
+
+Manual: open Python/C++ files and confirm `gd`, `K`, rename, completion, snippets,
+and `:Black`/`:ClangFormat`. Open Nix and test `:Alejandra` (Nix LSP remains
+pending). Open `.tex` and test snippets, `:Latexindent`, VimTeX and texlab. Open
+SuperCollider and confirm scnvim using `pw-jack nvim` where JACK is needed.
+Format-on-save is not enabled and is not an acceptance requirement yet.
 
 ## Open questions
 

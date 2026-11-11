@@ -42,6 +42,26 @@
     };
     formatter.${system} = pkgs.alejandra;
 
+    # Run with nix run .#graphify-deepseek; no system activation required.
+    packages.${system}.graphify-deepseek = pkgs.graphify.overridePythonAttrs (old: {
+      dependencies = (old.dependencies or []) ++ pkgs.graphify.optional-dependencies.openai;
+      pythonImportsCheck = (old.pythonImportsCheck or []) ++ ["openai" "tiktoken"];
+      # DeepSeek documents max_tokens, not OpenAI's max_completion_tokens.
+      # Otherwise non-thinking requests can retain the server's 8K default.
+      postPatch =
+        (old.postPatch or "")
+        + ''
+          substituteInPlace graphify/llm.py \
+            --replace-fail '"max_completion_tokens": max_completion_tokens,' \
+            '("max_tokens" if backend == "deepseek" else "max_completion_tokens"): max_completion_tokens,'
+          substituteInPlace graphify/llm.py \
+            --replace-fail 'finish_reason = resp.choices[0].finish_reason' \
+            'finish_reason = resp.choices[0].finish_reason; print(f"[graphify API] backend={backend} finish={finish_reason} input_tokens={input_tokens} output_tokens={output_tokens}", file=sys.stderr)'
+        '';
+      # Avoid upstream's bare-Python re-exec losing the Nix import paths.
+      makeWrapperArgs = (old.makeWrapperArgs or []) ++ ["--set" "PYTHONHASHSEED" "0"];
+    });
+
     checks.${system} = let
       # Exercise desktop scripts with the same overlays as the actual host.
       hostPkgs = self.nixosConfigurations.NixSama.pkgs;

@@ -36,7 +36,7 @@
     ++ rules "subagent" "deny" ["*"]
     ++ rules "subagent" "allow" ["explore" "review"]
     ++ rules "skill" "deny" ["*"]
-    ++ rules "skill" "allow" ["nix-validation" "opencode-config-review" "exact-computation"]
+    ++ rules "skill" "allow" ["nix-validation" "opencode-config-review" "exact-computation" "graphify"]
     ++ rules "external_directory" "ask" ["*"]
     ++ rules "shell" "ask" ["*"]
     ++ rules "shell" "allow" [
@@ -98,6 +98,20 @@
     };
   };
   commands = {
+    graphify = {
+      description = "Detect project sources, build and query a persistent research/code graph";
+      agent = "build";
+      template = ''
+        Load the graphify skill. Request: $ARGUMENTS.
+        Inspect project structure and infer relevant research, documentation
+        and code inputs, including TeX. Propose scope and explain exclusions.
+        Build/refresh only on request; confirm scope and any semantic extraction
+        backend, model and cost limits before calling it. Graphify constructs
+        the graph; do not substitute a manually authored conversation graph.
+        For retrieval use relevant graph context, provenance and original sources.
+        No automatic indexing, installers, hooks, MCP or saved answers.
+      '';
+    };
     review = {
       description = "Review current changes for concrete defects without editing";
       agent = "build";
@@ -232,7 +246,21 @@ in {
       message = "This module targets OpenCode V2 >=2.1.1 and <3.0.0.";
     }
   ];
-  home.packages = [launcher pkgs.nixd pkgs.alejandra];
+  home.packages = [
+    launcher
+    pkgs.nixd
+    pkgs.alejandra
+    pkgs.graphify
+    (pkgs.writeShellApplication {
+      name = "graphify-prepare";
+      runtimeInputs = [pkgs.python3 pkgs.git];
+      text = ''
+        exec python3 ${./graphify-prepare.py} "$@"
+      '';
+    })
+  ];
+  # Wins over Graphify's opt-in query-log settings; recipes also set it explicitly.
+  home.sessionVariables.GRAPHIFY_QUERY_LOG_DISABLE = "1";
 
   # Permissions use ordered arrays, not V1 tool-keyed maps.
   xdg.configFile."opencode/opencode.jsonc".text = ''
@@ -258,7 +286,7 @@ in {
         ]
       }}}},
       "experimental": {"todo": true},
-      "watcher": {"ignore": ["**/.opencode-tmp/**"]},
+      "watcher": {"ignore": ["**/.opencode-tmp/**", "**/graphify-out/**"]},
       "permissions": ${builtins.toJSON permissions}
     }
   '';
@@ -266,6 +294,7 @@ in {
   xdg.configFile."opencode/skills/nix-validation/SKILL.md".text = builtins.readFile ./nix-validation.md;
   xdg.configFile."opencode/skills/opencode-config-review/SKILL.md".text = builtins.readFile ./opencode-config-review.md;
   xdg.configFile."opencode/skills/exact-computation/SKILL.md".text = builtins.readFile ./exact-computation.md;
+  xdg.configFile."opencode/skills/graphify/SKILL.md".text = builtins.readFile ./graphify.md;
   # Scratch opt-out: OPENCODE_WORKSPACE_TMP=0 opencode
   # V2 has no LSP tools; use targeted lint/typecheck/compiler commands instead.
   # Delete old .opencode-tmp sessions only after processes exit; exclude from backups.

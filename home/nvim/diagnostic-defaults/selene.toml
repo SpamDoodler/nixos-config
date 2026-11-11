@@ -1,0 +1,7 @@
+# Used only when no project selene.toml exists.
+std = "lua51+vim"
+
+[lints]
+undefined_variable = "deny"
+unused_variable = "deny"
+incorrect_standard_library_use = "deny"

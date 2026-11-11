@@ -1,0 +1,8 @@
+# Fallback only: a project's Ruff configuration takes precedence in the editor.
+# Black remains the formatter; diagnostics never automatically apply fixes.
+unsafe-fixes = false
+
+[lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "C4", "PIE", "RUF", "S", "A", "DTZ", "T10", "ARG", "PERF", "RET", "PTH"]
+ignore = ["E501"] # Leave line layout to Black; long strings need not be split.
+fixable = ["ALL"] # Offer safe manual code actions; nothing applies automatically.

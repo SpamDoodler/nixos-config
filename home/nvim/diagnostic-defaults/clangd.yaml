@@ -1,0 +1,13 @@
+# No compiler, include path, C++ standard, or -Werror is imposed on projects.
+# clangd merges this baseline with .clang-tidy / .clangd. Project .clangd
+# Diagnostics.ClangTidy.Remove can narrow checks (Remove takes precedence).
+Diagnostics:
+  ClangTidy:
+    Add:
+      - clang-analyzer-*
+      - bugprone-*
+      - performance-*
+      - portability-*
+      - modernize-use-nullptr
+      - modernize-use-override
+    FastCheckFilter: Strict

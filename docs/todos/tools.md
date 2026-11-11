@@ -1,14 +1,15 @@
 # Tools and workflow
 
-Priority: **P1/P2**. AI/research tooling is a planned follow-on to Neovim;
+Priority: **P1/P2**. AI/research tooling is progressing alongside Neovim;
 other CLI suggestions remain optional. Add tools in measured stages rather
 than deploying every candidate at once.
 
 ## AI and research tool rollout
 
 User direction (2026-11-09): use AI tooling on this system, with Neovim and AI
-integration as the next main target. This section records intended pilots,
-not verified upstream feature claims or approval to run repository-wide scans.
+integration as the main target. Graphify CLI/skill integration is implemented;
+research-graph quality and savings remain pilot goals, not established results.
+This section is not approval to run repository-wide scans or paid extraction.
 Use [`nvim.md`](nvim.md) for editor integration and [`opencode.md`](opencode.md)
 for agent/credential boundaries.
 
@@ -16,19 +17,29 @@ for agent/credential boundaries.
 
 OpenCode agent integration + Minuet direct API completions + Git/diff review.
 No new subscription and no mandatory Nixvim migration. Finish this stage before
-adding multiple retrieval systems; ordinary source search remains the baseline.
+adding multiple competing editor interfaces. Neovim foundation, snippets and
+manual formatters are implemented; agent UI, Minuet and Git/diff UI remain open.
+Ordinary source search remains the baseline; Graphify integration proceeded in
+parallel and does not require the editor AI layer.
 
 ### Stage 2 — persistent research context
 
 | Candidate | Intended role | Pilot / adoption gate |
 |---|---|---|
-| Graphify | Navigable relationships across code and research documents | One project; inspect exact extraction, provenance, freshness, language support, and token cost |
+| [Graphify](graphify.md) | Installed CLI, curated OpenCode skill/command and corpus-preparation adapter | Integration implemented; representative research extraction, provenance/freshness acceptance and cost benchmark remain open |
 | QMD | Passage retrieval over research notes and diaries | Compare with `rg`; verify packaging, local model downloads, RAM/storage, and NixOS runtime |
 | Beads | Persistent tasks and blockers | One project's unresolved questions; test worktree/Git behavior and current database/service requirements |
 | Zotero CLI or MCP integration | Bibliography, annotations, and paper access | Identify the actual maintained integration; start read-only against a backed-up library |
 
-The previous package inspection found `pkgs.graphify` and `pkgs.beads`, but not
-`pkgs.qmd`; recheck the current lock before implementation. A package's existence
+Graphify is owned by `home/opencode/opencode.nix`, with a separate optional
+DeepSeek-enabled flake package candidate. The detailed current status and
+acceptance checklist are in [`graphify.md`](graphify.md). Both installed CLI and
+preparation helper were found on PATH; five helper tests passed during the latest
+documentation pass. No model extraction was run to update these documents.
+
+The previous package inspection also found `pkgs.beads`, but not `pkgs.qmd`;
+neither is added by this work. Recheck the current lock before implementation.
+A package's existence
 does not guarantee optional PDF/MCP/model backends are included. Verify exact
 CLI flags, skill installation paths, and OpenCode compatibility from the pinned
 source. Do not run installer commands that overwrite project instructions or
@@ -72,8 +83,12 @@ exact equation fidelity without testing it; convert selectively if needed.
       unless deliberately included. Review whether extracted snippets leave disk.
 - [ ] Check OS sandbox access to project indexes, model caches, tool state, and
       read-only Zotero access; do not expose the entire home directory.
-- [ ] Prefer CLI + on-demand skills when sufficient. Enable MCP servers only
-      for workflows that need them; measure schema/context overhead too.
+- [x] Integrate Graphify through a CLI and curated on-demand OpenCode skill,
+      without an always-loaded MCP server, hooks or automatic indexing.
+- [x] Add bounded verbatim TeX/unsupported-text preparation with manifest and
+      source hashes; verify its five offline tests.
+- [ ] Complete Graphify's extraction/retrieval/freshness pilot in `graphify.md`.
+- [ ] Keep additional MCP servers opt-in and measure their schema/context overhead.
 - [ ] Benchmark project-state reconstruction, exact literature lookup, and a
       cross-file proof audit against the plain OpenCode workflow. Count initial
       indexing, reindexing, local model costs, and subsequent query costs.
@@ -85,6 +100,7 @@ exact equation fidelity without testing it; convert selectively if needed.
 
 | Tool | Package | Where |
 |---|---|---|
+| `graphify`, `graphify-prepare` | `pkgs.graphify` + packaged helper | Home Manager (`home/opencode/opencode.nix`); see `graphify.md` |
 | `atuin` | `pkgs.atuin` or `programs.atuin` | Home Manager |
 | `tealdeer` | `pkgs.tealdeer` | Home Manager |
 | `dust` | `pkgs.dust` | Home Manager |
