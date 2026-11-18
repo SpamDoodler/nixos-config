@@ -1,14 +1,14 @@
 # Rigor calibration examples
 
-These teach the reviewer what counts as acceptable, a finding, or a note in YOUR field. The first five are generic seeds. Replace them with real cases from your own papers and referee reports; use `/calibrate` to add new ones as you disagree with a review. Examples outrank the rubric in SKILL.md.
+These are regression cases for applying the rubric in `SKILL.md`, not sources of policy or proof. If a case conflicts with a claim's obligations, flag the conflict and apply the rubric. Use `/calibrate` for additional workspace cases.
 
 Format: **Situation** / **Decision** / **Why**.
 
 ---
 
-**Situation.** Eq. (7) exchanges a sum over modes with an integral over time. The integrand is smooth and decays exponentially after Wick rotation.
-**Decision.** Fine at P. Rigor note (routine) if the target were M.
-**Why.** Standard move, no obstruction visible, specialists do it without comment.
+**Situation.** Eq. (7) exchanges a sum over modes with an integral over time. Each mode is smooth and decays exponentially after Wick rotation, but there is no bound on the sum over modes.
+**Decision.** GAP if the exact identity depends on the exchange and gives no justification. A summable bound in integrable norm, or another applicable argument, could close it.
+**Why.** Decay of individual modes does not control the sum.
 
 ---
 
@@ -24,9 +24,9 @@ Format: **Situation** / **Decision** / **Why**.
 
 ---
 
-**Situation.** A formal manipulation with a squared delta function. The result agrees with a known special case and with the numerical check in Fig. 3.
-**Decision.** Rigor note only.
-**Why.** Formal but standard, and the independent checks pass.
+**Situation.** An exact result uses a squared delta function without defining the product. It agrees with a known special case and a numerical check.
+**Decision.** GAP if the product carries the identity. Specify the formal setting or a regulator and justify the operation or limit there.
+**Why.** Agreement in checks is useful evidence but does not define the product.
 
 ---
 

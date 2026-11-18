@@ -21,16 +21,16 @@ Grade the task as written on its card, not the parent problem. The grade sets th
 
 A wrong first choice costs in two directions. Too low: a wasted attempt, a verification round, and a delay for every task that waits on this one. Too high: money on every such task. The router weighs both, with time weighted more on the critical path and for P1. So:
 
-1. Run `bench similar` with the title first. If similar past tasks were realised at a different level, follow the data.
-2. Grade honestly; do not pre-shade the grade to force a tier. The router does the cost and time trade-off, and an honest grade keeps the benchmark meaningful.
-3. Never start a difficulty-4 or 5 task below sol, or a P1 task at luna.
+1. Run `bench similar` for context. Submit your own rubric grade and relevant tags.
+2. The ledger does not adjust the grade from benchmark history. Use `bench route` or `bench report` to review the evidence before making a manual change.
+3. Start difficulty 4 at Sol Low or Sol High, difficulty 5 at Sol High, and never start P1 at Luna. Historical IDs `luna`, `terra`, `sol`, and `astra` mean Medium, Medium, High, and xhigh; `terra-low`, `sol-low`, and `astra-max` identify distinct deployments.
 4. Prefer splitting a grade-4 task into grade-2 and grade-3 pieces when a clean split exists. Cheap parallel work beats one expensive serial task.
-5. Re-grade a task type when the benchmark shows two or more failures at the same tier.
-6. Keep the original difficulty in `bench outcome` across escalations. The benchmark compares it with the tier that actually solved the task.
+5. During execution, the working grade changes only through a manual ledger update with a reason. A clean verified Luna solve or checked failures at distinct main tiers can inform that decision; incomplete results and uncleared gates cannot.
+6. Keep the original difficulty in `bench outcome` across escalations. A working regrade changes routing guidance, not priority, verification requirements or Astra eligibility. Never treat a successful probe as completion of the main task.
 
 ## Astra
 
-Astra is never a starting tier. It is reached only when a priority-1 task has failed at sol; the ledger refuses anything else. For non-P1 tasks, a sol failure means re-scope, split or drop.
+Astra xhigh is never a starting tier. It is reached only when a priority-1 task has failed at Sol High. For non-P1 tasks, a Sol High failure means re-scope, split or drop. Astra Max is available but never automatic: the user must explicitly approve the escalation, and both Sol High and Astra xhigh must already have failed on the same P1 task. Terra Medium is benchmark-only, regardless of measured results.
 
 ## Task types
 

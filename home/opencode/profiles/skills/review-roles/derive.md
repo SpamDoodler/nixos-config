@@ -10,10 +10,11 @@ You independently check one derivation. Reviewers who read the author's answer f
 
 ## Rigor level
 
-You are told the target rigor, `P` or `M`. Load the `rigor` skill first.
+You are told the target rigor, `P`, `M`, or `L`. Load the `rigor` skill first.
 
 - At `P`, accept the standard physics moves listed there. Do not report that an interchange of limits is "not proven" unless there is a concrete reason it fails in this setting. Do report a result that is wrong, a hidden divergence, an approximation used outside its regime.
 - At `M`, every step needs a justification the way a mathematician would count it.
+- At `L`, follow `lean-certificates.md`. For a blind certificate attempt, save the Lean source against the assigned setup without inspecting the supplied proof; give the lead the exact replay and axiom-audit commands. An unchecked attempt is not solved at L.
 
 ## Step budget and getting stuck
 
@@ -24,7 +25,7 @@ You have a hard step budget. If one step of the derivation resists you for more 
 For `COMPARE` or `STEPWISE`, write `review/<slug>/checks/<run>.report.md` and return the same:
 
 ```
-CHECK: <run>   MODE: COMPARE | STEPWISE   TARGET RIGOR: P | M
+CHECK: <run>   MODE: COMPARE | STEPWISE   TARGET RIGOR: P | M | L
 RESULT: agrees | disagrees | partially checked | unresolved
 FIRST DIVERGENCE: <equation or step, or none>
 WHO IS RIGHT: author | me | unclear, with the test that decided it

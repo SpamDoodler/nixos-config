@@ -38,6 +38,7 @@ Before any drafting, build the map (the architect does this in `STORY.md`):
 - **Redundancy is a feature.** Restate a definition when it is used again chapters later. Recap before building on something. A lengthy text with no gaps beats a short one with holes.
 - **Every symbol introduced in words** at first use and listed in the notation table; the same symbol means the same thing in every chapter.
 - **Proofs where they teach.** Prove what the student will need to reproduce or adapt. For results they only need to trust, give the precise statement, conditions, a reference and an intuitive argument.
+- **Further reading.** Include a short, annotated selection researched by `w-literature`, grouped by chapter or topic. Give precise locators and tell readers which reference to use for a gentler explanation, a worked example, or a deeper treatment. Keep this optional and keep citations at the point of use.
 - Direct, friendly voice ("we", "you" in exercises). Short paragraphs. Diagrams early and often.
 
 ## The gap test

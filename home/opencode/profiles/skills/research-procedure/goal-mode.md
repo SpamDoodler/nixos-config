@@ -23,3 +23,7 @@ GOAL CHECK: PASS
 ```
 
   Tick only what is true, with the file that shows it. If the budget is spent or every formulation is blocked, write a partial report and end with `STATUS: BLOCKED` and exactly what would unblock it.
+
+  For L scope add a required item: every substantive claim in that scope has
+  a matching, replayed Lean certificate with an axiom audit recorded in
+  `CLAIMS.md`. Do not emit `GOAL CHECK: PASS` if that item is unmet.

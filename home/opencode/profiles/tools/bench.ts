@@ -1,8 +1,8 @@
 import { tool } from "../lib/tool.ts"
-import { appendJsonl, benchPath, checkerReport, isReviewEvent, ledgerPath, loadConfig, loadOutcomes, now, project, readJsonl, report, reviewBenchPath, reviewReport, route, similar, toCSV, workspacePath, writeText } from "../lib/core.ts"
+import { appendJsonl, benchPath, checkerReport, isReviewEvent, LADDER, MATCHED_PROBES, ledgerPath, loadConfig, loadOutcomes, now, project, readJsonl, report, reviewBenchPath, reviewReport, route, similar, toCSV, workspacePath, writeText } from "../lib/core.ts"
 import { fold } from "../lib/ledger.ts"
 
-const TIERS = ["luna", "terra", "sol", "astra"] as const
+const TIERS = LADDER
 
 export default tool({
   description:
@@ -29,7 +29,7 @@ export default tool({
     check_id: tool.schema.string().optional().describe("rv_check: id of one checker run, e.g. S3"),
     role: tool.schema.string().optional().describe("rv_check: mapper|derive|sanity|lit|consistency|trace|resolve"),
     claims: tool.schema.array(tool.schema.string()).optional().describe("rv_check: claim ids the check examined"),
-    rigor: tool.schema.enum(["P", "M"]).optional().describe("Matched blind derive runs: target rigor"),
+    rigor: tool.schema.enum(["P", "M", "L"]).optional().describe("Matched blind derive runs: target rigor"),
     derive_result: tool.schema.enum(["solved", "incorrect", "unresolved", "ungraded"]).optional(),
     items: tool.schema.array(tool.schema.object({
       id: tool.schema.string().describe("finding id or planted id"),
@@ -91,6 +91,8 @@ export default tool({
         const check = reviewEvents().find((ev) => ev.kind === "rv_check" && ev.review === a.review && ev.check_id === a.check_id)
         if (check?.role !== "derive" || !check.task_id || !check.difficulty || !check.rigor)
           return "ERROR: register a matched derive run before recording its result."
+        if (check.rigor === "L" && a.derive_result === "solved" && !a.note?.trim())
+          return "ERROR: an L solve needs a certificate evidence reference in note (statement match, replay, and axiom audit)."
         appendJsonl(path, { kind: "rv_derive", t, review: a.review, check_id: a.check_id, result: a.derive_result, note: a.note })
         return `Blind derivation ${a.check_id}: ${a.derive_result}.`
       }
@@ -107,14 +109,14 @@ export default tool({
     const events = readJsonl(ledgerPath(dir))
     const outs = loadOutcomes(researchPath, cfg, events)
     const coverage = () => {
-      const tasks = [...fold(events).tasks.values()].filter((t) => t.attempts.length && (t.origDifficulty === 5 || t.difficulty === 5))
-      const rows = tasks.flatMap((t) => ["luna", "terra"].map((tier) => {
+      const tasks = [...fold(events).tasks.values()].filter((t) => t.attempts.length)
+      const rows = tasks.flatMap((t) => MATCHED_PROBES.map((tier) => {
         const p = t.probes.find((p) => p.tier === tier)
         const status = !p ? "missing" : p.done ? p.result === "ungraded" ? "ungraded" : "graded" : p.workerFinished ? "awaiting grade" : "dispatched"
         return { id: t.id, tier, status }
       }))
       const summary = ["graded", "ungraded", "awaiting grade", "dispatched", "missing"].map((s) => `${rows.filter((r) => r.status === s).length} ${s}`)
-      return `## Difficulty-5 paired probe coverage\n${tasks.length} tasks: ${summary.join(", ")}.\n` +
+      return `## Blind benchmark coverage\n${tasks.length} tasks: ${summary.join(", ")}.\n` +
         rows.filter((r) => r.status !== "graded").map((r) => `- ${r.id}/${r.tier}: ${r.status}`).join("\n")
     }
     if (a.action === "dashboard")

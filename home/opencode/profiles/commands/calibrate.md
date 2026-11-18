@@ -5,4 +5,4 @@ agent: review
 
 Calibration note from the user: $ARGUMENTS
 
-Load the `rigor` skill and append one worked example to the `examples.md` file in its base directory in the existing format (Situation / Decision / Why). Make the situation specific enough to recognise but general enough to apply to similar cases in this field. State the decision using the vocabulary of the finding schema (kind, severity, or "rigor note only"). If the note is ambiguous about what the right call is, ask one question first. Then confirm in two lines what you added.
+Load `rigor` and append one regression case to `review/calibration.md` (Situation / Expected classification / Applicable obligation / Why). Do not edit the installed skill or make the case a rule. Flag any conflict with the rubric. A user instruction changing the standard for a named claim belongs in that review's claim map, not in the regression cases. Ask one focused question if the intended change is ambiguous.

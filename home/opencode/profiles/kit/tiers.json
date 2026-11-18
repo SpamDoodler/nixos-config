@@ -1,5 +1,5 @@
 {
-  "_about": "Router and benchmark settings. You are on a subscription, so 'cost' means allowance. weights = how much 1000 tokens of each tier eat from your allowance, relative to each other; luna near zero. cost/latency are priors per attempt, replaced by measured allowance once each startable tier has learned_cost_min_n priced attempts.",
+  "_about": "Router and benchmark settings. 'cost' means estimated subscription allowance. Dispatch uses configured priors. The advisory bench route uses measured cost for deployments with learned_cost_min_n priced attempts.",
   "weights": {
     "luna": 0.05,
     "terra": 0.3,
@@ -33,9 +33,8 @@
   "prior_strength": 2,
   "explore_min_n": 5,
   "data_mode": "balanced",
-  "_data_mode": "All modes pair Luna and Terra on first difficulty-5 runs. Lean skips other probes. Balanced/max sample Terra on 60% of eligible difficulty-3/4 Sol starts and use Luna broadly.",
+  "_data_mode": "All modes run the full four-deployment blind batch on every first task dispatch. Mode affects extra cross-checks, not production tier defaults or that batch.",
   "probe_slots": 64,
-  "_probe_luna": "most: a luna probe on nearly every task (luna is almost free); uncertain: only where luna's pass rate for that (type, difficulty) is still unclear; off.",
   "_cross_checks": "Extra checkers for benchmark data. check_down_rate: chance that a result checked by terra (or sol) is also checked by luna (or terra). check_up_rate: chance of a check one model up (sol over terra; astra over sol, only on P1-P2 work). astra_down_probe: sol re-checks astra's checks on headline (V4) claims, on all P1 ('p1'), or never. Disagreements: luna vs terra -> luna counted wrong, luna_audit_rate of them re-judged by sol; terra vs sol -> astra adjudicates; sol vs astra -> both reconsider with the other's report. max_adjudications per project caps the extra cost.",
   "concurrency": 200,
   "_concurrency": "Main slots, separate from probe slots. These are ceilings, not targets: dispatch ready independent work within the run budget. Provider rate limits and local compute limits still apply.",

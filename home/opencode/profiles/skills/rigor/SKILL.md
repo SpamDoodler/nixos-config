@@ -1,28 +1,56 @@
 ---
 name: Rigor levels
-description: "Physics-level vs mathematical-level rigor: what counts as wrong, unproven-but-standard, or unverified; the evidence ladder. Load before judging any derivation or claim, and read examples.md in this skill's directory."
+description: "Choose claim-specific obligations using physics (P), mathematical (M), or Lean-certified (L) rigor."
 ---
 
 # Rigor levels for review
 
-Every claim is checked at a **target rigor**.
+Every claim has a **target rigor** and concrete **obligations**. P, M and L are
+starting points, not substitutes for spelling out what the claim promises.
 
 - **P (physics level).** The default. The standard of a careful referee in the field: formal manipulations that specialists routinely use are fine, but the result must be right and must pass the physical sanity tests below.
-- **M (mathematical level).** Only for claims the author marks as rigorous (theorem, proposition, lemma, "we prove", "rigorously"), or that the user marks M in the request.
+- **M (mathematical level).** Use for claims presented as rigorous (e.g. theorem, proposition, lemma, "we prove") or marked M by the user.
+- **L (Lean-certified level).** Select explicitly for a scope or claim. In that scope every substantive claim needs a matching Lean certificate; a rigorous prose proof alone is not sufficient. Read `lean-certificates.md` before planning, checking, or reporting L claims.
+
+## Set obligations before checking
+
+State the claim's scope, assumptions, and the specific conditions that would
+make it stand as written. Apply the user's explicit standard or obligation
+override to the named claim, and record its scope. Relaxing a review
+requirement does not turn missing evidence into a proof or silently weaken
+what the manuscript asserts. Mark ambiguous scope instead of choosing the
+easier reading silently.
+
+| Claim as stated | Typical obligations |
+| --- | --- |
+| Formal identity | Specify the algebra or formal expansion, the coefficient domain, and why the coefficient operations and any rearrangements are defined. Require analytic convergence only if an analytic equality is also claimed. |
+| Controlled approximation | State the regime, small parameter, and why omitted terms are subleading in that regime. Require an explicit bound if promised, or if needed to support a quantitative conclusion. |
+| Exact analytic identity | Specify domains and hypotheses. Justify the load-bearing steps, such as exchanging limits, taking boundary values, choosing branches or contours, and treating poles. Exactness can impose these obligations at P too. |
+| Numerical observation | Record enough inputs, method, and precision to reproduce it. Check relevant resolution, parameter sensitivity, and error sources. Do not infer a proof from finite tests. |
+
+Use applicable field references to justify a standard move when it carries
+the claim: check the statement and conditions, not merely the citation.
+Record separately the obligation, the evidence for it, and whether it is
+met, unmet, or unresolved. Severity follows what depends on it. A blind
+re-derivation that repeats an unjustified operation can corroborate the
+algebra, but does not establish the conditions for that operation.
 
 ## The central question
 
 For every step that is not fully justified, decide which of three things it is. Only the first two are different from each other in a way that matters.
 
 1. **Wrong.** The result differs from the correct one, or the step is invalid in this setting. This is a finding at any level.
-2. **Unproven but standard.** Specialists use this step routinely and there is no reason to think it fails here. At level P this is **not a finding**. Record it in the rigor-notes table if it would matter at level M.
+2. **Unproven but standard.** This is a note at P only if the missing justification is not an obligation of the claim as stated. It cannot substitute for an L certificate.
 3. **Unverified.** You could not tell. Say so. Do not inflate it into a finding, and do not quietly call it fine.
 
 **The referee test.** Would a competent referee in this specific subfield, reading at normal speed, ask for this to be fixed before publication? If not, it is at most a rigor note.
 
-## Accepted without comment at level P
+## Often acceptable at P when not an unmet claim obligation
 
-When the setting is a plausible one and no known obstruction applies:
+These are common shortcuts, not blanket permission. If a result materially
+depends on one, state why it applies here; mark it unresolved if that cannot
+be checked. A smooth integrand alone does not justify exchanging a sum and
+an integral.
 
 - Exchanging sums, integrals, derivatives and limits for smooth, decaying integrands.
 - Dropping boundary or surface terms when the fields fall off fast enough physically.
@@ -80,4 +108,8 @@ Say which level supports every "verified":
 
 ## Calibration
 
-Read the bundled `examples.md`. During document review also read `review/calibration.md` if present; `/calibrate` updates that workspace file. Examples guide classification, not whether evidence supports a result.
+Use bundled `examples.md` and, during document review, `review/calibration.md`
+if present as regression cases for consistent judgments. They do not set the
+standard, override the rubric or user-scoped obligations, or supply evidence.
+If an example conflicts with the applicable rule, flag the conflict and
+apply the rule. `/calibrate` records examples, not policy changes.

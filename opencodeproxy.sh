@@ -4,10 +4,13 @@ set -euo pipefail
 server="${1:-10.106.75.8:1080}"
 if (($#)); then shift; fi
 opencode_bin="${OPENCODE_PROXY_BIN:-opencode}"
+case "$server" in
+  socks5://*|socks5h://*) server=${server#*://} ;;
+esac
 
 # Only accept a SOCKS5 endpoint, never arbitrary Privoxy configuration text.
 if [[ ! "$server" =~ ^([a-zA-Z0-9_.-]+|\[[a-fA-F0-9:.%_-]+\]):([0-9]{1,5})$ ]]; then
-  printf 'Invalid SOCKS5 proxy: use HOST:PORT or [IPv6]:PORT\n' >&2
+  printf 'Invalid SOCKS5 proxy: use HOST:PORT, [IPv6]:PORT or socks5://HOST:PORT (no credentials)\n' >&2
   exit 2
 fi
 server_port="${BASH_REMATCH[2]}"
@@ -78,11 +81,14 @@ if ((!ready)); then
   exit 1
 fi
 
-printf 'Starting OpenCode through SOCKS5 proxy %s (local port %s)\n' "$server" "$port" >&2
+printf 'Privoxy listening on 127.0.0.1:%s; upstream SOCKS5 %s (not yet tested)\n' "$port" "$server" >&2
 export HTTP_PROXY="http://127.0.0.1:$port"
 export HTTPS_PROXY="$HTTP_PROXY"
 export http_proxy="$HTTP_PROXY"
 export https_proxy="$HTTP_PROXY"
+# OpenCode consults protocol-specific overrides before HTTP(S)_PROXY.
+export WS_PROXY="$HTTP_PROXY" WSS_PROXY="$HTTP_PROXY"
+export ws_proxy="$HTTP_PROXY" wss_proxy="$HTTP_PROXY"
 export NO_PROXY=localhost,127.0.0.1,::1
 export no_proxy="$NO_PROXY"
 unset ALL_PROXY all_proxy

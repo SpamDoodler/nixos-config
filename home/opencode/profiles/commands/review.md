@@ -1,5 +1,5 @@
 ---
-description: "Review a file or section. Usage: /review <path> [depth=quick|standard|deep] [rigor=P|M] [free-text notes]"
+description: "Review a file or section. Usage: /review <path> [depth=quick|standard|deep] [rigor=P|M|L] [free-text notes]"
 agent: review
 ---
 

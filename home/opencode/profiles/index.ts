@@ -3,7 +3,7 @@ import ledger from "./tools/ledger.ts"
 import stylecheck from "./tools/stylecheck.ts"
 import reviewSnapshot from "./tools/review-snapshot.ts"
 import { registerTool } from "./lib/tool.ts"
-import { appendJsonl, benchPath, ledgerPath, loadConfig, now, readJsonl, reviewBenchPath } from "./lib/core.ts"
+import { appendJsonl, benchPath, ledgerPath, loadConfig, now, readJsonl, reviewBenchPath, tierVariants } from "./lib/core.ts"
 import { audit, fold } from "./lib/ledger.ts"
 
 // Match canonical versioned releases only: fast/flex/dates and other providers
@@ -33,18 +33,35 @@ export default {
     if (process.env.NIXSAMA_OPENCODE_RESEARCH !== "1" ||
         process.env.OPENCODE_CONFIG_PROJECT_DISABLE !== "1") return
     const { data: inventory } = await ctx.model.list()
-    const tiers = Object.fromEntries(["luna", "terra", "sol", "astra"].map((tier) => [tier, latest(inventory, tier)]))
-    const modelSet = Object.values(tiers).every(Boolean) ? Object.values(tiers).join("+") : undefined
+    const tiers = Object.fromEntries(Object.entries(tierVariants).map(([tier, [family, effort]]) => {
+      const id = latest(inventory, family)
+      if (!id) return [tier, undefined]
+      const model = inventory.find((m) => m.providerID === "openai" && m.id === id && m.enabled !== false)
+      const variant = model.variants?.some((v) => v.id === effort) ? effort : undefined
+      if (!variant) console.warn(`opencode-research: ${id} does not advertise ${effort}; using its default variant.`)
+      return [tier, { providerID: "openai", id, variant }]
+    }))
+    const refs = Object.values(tiers)
+    const modelSet = refs.every(Boolean) ? refs.map((ref) => `${ref.id}.${ref.variant ?? "default"}`).join("+") : undefined
+    const noPatch = (id: string) => id === "research" || id === "review" || /^(r|rv)-/.test(id)
     await ctx.agent.transform((editor) => {
-      for (const [id, tier] of Object.entries({ ...ctx.options.tiers, compaction: "terra" })) {
+      for (const [id, tier] of Object.entries({ ...ctx.options.tiers, compaction: "terra-low" })) {
         const model = tiers[tier]
         // This transform can run before OpenCode loads the Markdown, which
         // supplies the agent instructions but intentionally no model field.
-        if (!model) continue
-        editor.update(id, (agent) => { agent.model = { providerID: "openai", id: model } })
+        if (!model && !noPatch(id)) continue
+        editor.update(id, (agent) => {
+          if (model) agent.model = { ...model }
+          if (noPatch(id)) agent.permissions.push({ action: "patch", resource: "*", effect: "deny" })
+        })
       }
     })
     await ctx.tool.transform((editor) => {
+      // V2 normally exposes patch, edit and write under the same visibility
+      // action. Split patch out without changing its internal edit path checks.
+      editor.update("patch", (tool) => {
+        tool.options = { ...tool.options, permission: "patch" }
+      })
       registerTool(editor, "ledger", ledger, ctx.location, ["research"], modelSet)
       registerTool(editor, "bench", bench, ctx.location, ["research", "review", "rv-scorer"], modelSet)
       registerTool(editor, "stylecheck", stylecheck, ctx.location, ["write"])
@@ -55,9 +72,11 @@ export default {
     await ctx.session.hook("experimental.idle", async (input) => {
       try {
         const info = await ctx.session.get({ sessionID: input.sessionID })
-        if (info.parentID && /^(r|rv|w)-/.test(info.agent ?? "") && modelSet) {
-          const ref = info.model ?? { providerID: "openai", id: tiers[ctx.options.tiers[info.agent]] }
-          if (!ref.id || ref.providerID !== "openai" || !Object.values(tiers).includes(ref.id)) return
+        if (info.parentID && /^(r|rv)-/.test(info.agent ?? "") && modelSet) {
+          const expected = tiers[ctx.options.tiers[info.agent]]
+          const ref = info.model ?? expected
+          if (!ref || !expected || ref.providerID !== expected.providerID ||
+              ref.id !== expected.id || ref.variant !== expected.variant) return
           appendJsonl(info.agent.startsWith("rv-") ? reviewBenchPath(dir, modelSet) : benchPath(dir, modelSet), {
             kind: "usage", t: now(), session: info.id, parent: info.parentID, agent: info.agent,
             model: `${ref.providerID}/${ref.id}${ref.variant ? `#${ref.variant}` : ""}`,

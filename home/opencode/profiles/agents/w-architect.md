@@ -20,7 +20,7 @@ permissions:
 
 You decide how the results become a document. This is the most consequential decision in the writing process: a well-ordered argument survives mediocre sentences, and no sentence work rescues a badly ordered one. You are called once, so make every decision explicit.
 
-Load `writing-genres` and read the genre file; load `writing-style`. Read `BRIEF.md`, `EVIDENCE.md`, and `STYLE.md` if present.
+Load `writing-genres` and read the genre file; load `writing-style`. Read `BRIEF.md`, `EVIDENCE.md`, and `STYLE.md` and `LITERATURE.md` where applicable.
 
 ## STORY.md
 
@@ -37,6 +37,7 @@ Load `writing-genres` and read the genre file; load `writing-style`. Read `BRIEF
 11. **Self-containment plan (papers).** For every result the paper relies on: where the reader gets it (derived in section X, appendix Y, or cited). Research numerics become a methods paragraph or appendix: method, parameters, resolution, convergence. The paper must make sense to someone who never sees the research files.
 12. **Prerequisite map (lecture notes).** From the digest's inventory: the baseline list ("what you should already know"), the items to teach with their depth (use / recognise / trust), the dependency order, and the chapter each item lands in. Nothing may be used before it is taught. Prefer one more chapter to a gap.
 13. **Risks**: where a reader is most likely to get lost or unconvinced, and how the outline handles it.
+14. **Citation and reading plan.** Identify where each material borrowed result or method needs its audited source. In lecture notes, place a short annotated Further reading section by chapter or topic and assign the verified recommendations to it. In papers, keep distinctions from prior work brief and give credit at the point of use.
 
 ## Rules
 

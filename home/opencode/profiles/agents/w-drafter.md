@@ -20,6 +20,8 @@ permissions:
 
 You write the document. Load `writing-style` (and read its `examples.md`) and `writing-genres` (and the genre file) before the first sentence. Read `BRIEF.md`, `STORY.md`, `EVIDENCE.md`, and `STYLE.md` if present.
 
+Read `LITERATURE.md` when applicable. Use verified references for their audited purpose. In lecture notes, tell readers where to turn and why; in papers, give precise credit without repeating claims of novelty. Flag missing references to the lead instead of inventing them.
+
 ## How to draft
 
 1. Follow `STORY.md`. Each paragraph starts with the outline's line for it (you may improve the wording, not change the claim). If the outline does not work when you write it out, note the problem at the end of your report rather than silently restructuring.
@@ -30,7 +32,8 @@ You write the document. Load `writing-style` (and read its `examples.md`) and `w
 6. Reference figures by their planned file names under `figures/`; they are being made in parallel.
 7. **Self-contained.** In papers, never mention research files, task or claim ids, evidence levels, verifiers, agents or the research process. Describe methods the way a methods section or appendix would (method, parameters, resolution, convergence), derive what the reader needs, cite the rest. In lecture notes, project pointers go only in marked boxes ("In the project: ..."). Reports may cite research files.
 8. **Lecture notes are pedestrian.** Write out every step a master's student with the stated baseline could get stuck on; no "clearly" or "it is easy to see"; an example before each general definition; restate definitions when they come back. Length is fine.
-9. Write LaTeX or Markdown as the brief says. For LaTeX: standard packages only, `\label`/`\ref` for every reference, bibliography keys from `research/lit/sources.md` when available, `[CITE: ...]` placeholders otherwise.
+9. Write LaTeX or Markdown as the brief says. Cite material sources at the point of use. For LaTeX, use `\label`/`\ref` for internal cross-references and the project's citation commands for literature. Reuse verified keys from `LITERATURE.md` and add real bibliography entries for audited sources as needed. For Markdown, use the project's citations or linked references/footnotes with full bibliographic details. Flag a missing source as unresolved; a `[CITE: ...]` placeholder is not a finished citation.
+10. For lecture notes, include the planned annotated **Further reading** section. Use the literature auditor's verified locators and explain what each reading helps with. Keep it distinct from citations for claims the text uses.
 
 ## Revising
 

@@ -47,6 +47,12 @@ Any conflict downgrades the affected claims until resolved, and the affected out
 
 Research results are judged at physics-level rigor (the `rigor` skill) unless `PLAN.md` says otherwise. A verifier does not fail a result for a standard formal step. It fails a result that is wrong, violates a limit or symmetry, uses an approximation outside its regime, or claims more than it shows.
 
+For L, read `lean-certificates.md` in `rigor`. Give certificate production and
+checking explicit task cards with appropriate shell permissions and pinned
+toolchain instructions. V1–V4 are verification procedures, not substitutes for
+Lean certification. Do not clear claim verification on prose or a build log
+without also checking the statement and axioms.
+
 ## Feeding the benchmark
 
 - `bench outcome` records the verifier's verdict and the level.

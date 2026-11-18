@@ -3,7 +3,7 @@
 // footer (one status line; the rules only when something is overdue), which keeps the reminder at the end
 // of the context without bloating it.
 import { existsSync } from "node:fs"
-import { LADDER, STARTABLE, workspacePath, type Config, type Tier, type VerifyLevel, type Verdict } from "./core.ts"
+import { LADDER, MATCHED_PROBES, STARTABLE, workspacePath, type Config, type Tier, type VerifyLevel, type Verdict } from "./core.ts"
 
 export type Status = "pending" | "running" | "verifying" | "adjudicating" | "redteam" | "done" | "failed" | "blocked" | "split" | "dropped"
 const TERMINAL: Status[] = ["done", "split", "dropped"]
@@ -16,6 +16,7 @@ export interface Probe { tier: Tier; kind: "luna" | "shadow" | "paired"; workerF
 export interface Task {
   id: string; title: string; type: string; tags: string[]
   difficulty: number; origDifficulty: number; lo: number; hi: number
+  gradingBaseline?: number; gradeReason?: string
   priority: number; verify: VerifyLevel; deps: string[]; status: Status; tier?: Tier
   failedTiers: Tier[]; attempts: Attempt[]; probes: Probe[]; lastVerdict?: Verdict
   card?: string; link?: string; notes: string[]; created: string; updated: string
@@ -47,7 +48,8 @@ export function fold(events: any[]): Ledger {
         const d = e.difficulty ?? 3
         const [lo, hi] = parseRange(e.difficulty_range, d)
         tasks.set(e.id, {
-          id: e.id, title: e.title ?? e.id, type: e.type ?? "other", tags: e.tags ?? [], difficulty: d, origDifficulty: d, lo, hi,
+          id: e.id, title: e.title ?? e.id, type: e.type ?? "other", tags: e.tags ?? [], difficulty: e.working_difficulty ?? d, origDifficulty: d, lo, hi,
+          gradingBaseline: e.working_difficulty ?? d, gradeReason: e.grade_reason,
           priority: e.priority ?? 2, verify: e.verify ?? "V1", deps: e.deps ?? [], status: "pending", failedTiers: [], attempts: [], probes: [],
           card: e.card, link: e.link, notes: [], created: e.t, updated: e.t,
         })
@@ -56,10 +58,17 @@ export function fold(events: any[]): Ledger {
       case "update":
         if (!t) break
         if (e.status) t.status = e.status
-        if (e.difficulty) t.difficulty = e.difficulty
+        if (e.difficulty) { t.difficulty = e.difficulty; t.gradingBaseline = e.difficulty; t.gradeReason = e.note ?? "manual regrade" }
         if (e.priority) t.priority = e.priority
         if (e.verify) t.verify = e.verify
         note()
+        break
+      case "regrade":
+        if (t) {
+          t.difficulty = e.difficulty
+          t.gradeReason = e.note
+          t.notes.push(`difficulty ${e.previous} → ${e.difficulty}: ${e.note}`)
+        }
         break
       case "dispatch":
         if (!t) break
@@ -197,24 +206,31 @@ export function renderStats(s: ReturnType<typeof stats>, cfg: Config) {
 }
 
 // ---------- policy ----------
-export function nextTier(t: Tier): Tier | null { const i = LADDER.indexOf(t); return i >= 0 && i < LADDER.length - 1 ? LADDER[i + 1] : null }
+export function nextTier(t: Tier): Tier | null {
+  return [...STARTABLE, "astra" as const].find((tier) => tierIdx(tier) > tierIdx(t)) ?? null
+}
 export const tierIdx = (t: Tier) => LADDER.indexOf(t)
 
 /** Check one level up: luna by terra, terra by sol, sol by sol (P1: astra), astra by sol. */
 export function checkerPolicy(worker: Tier, priority: number, cfg: Config): { agent: string; tier: Tier; allowed: Tier[] } {
   switch (worker) {
-    case "luna": return { agent: "r-verifier-t", tier: "terra", allowed: ["terra", "sol", "astra"] }
+    case "luna": return { agent: "r-verifier-t", tier: "terra-low", allowed: ["terra-low", "sol-low", "sol", "astra"] }
+    case "terra-low": return { agent: "r-verifier-s-low", tier: "sol-low", allowed: ["sol-low", "sol", "astra"] }
     case "terra": return { agent: "r-verifier-s", tier: "sol", allowed: ["sol", "astra"] }
+    case "sol-low": return { agent: "r-verifier-s", tier: "sol", allowed: ["sol", "astra"] }
     case "sol": return priority === 1 && cfg.astra_checks_p1_sol ? { agent: "r-verifier-a", tier: "astra", allowed: ["astra"] } : { agent: "r-verifier-s", tier: "sol", allowed: ["sol", "astra"] }
-    case "astra": return { agent: "r-verifier-s", tier: "sol", allowed: ["sol"] }
+    case "astra":
+    case "astra-max": return { agent: "r-verifier-s", tier: "sol", allowed: ["sol"] }
   }
 }
 export const checkMode = (v: VerifyLevel) => (v === "V1" ? "check" : v === "V2" ? "independent" : "compare")
 
 export function tierGuard(t: Task, tier: Tier): string | null {
-  if (tier !== "astra") return null
+  if (tier === "terra") return "Terra Medium is benchmark-only."
+  if (tier !== "astra" && tier !== "astra-max") return null
   if (t.priority !== 1) return `astra is reserved for priority-1 tasks; ${t.id} is priority ${t.priority}. Re-scope, split or drop instead, or raise the priority with a note.`
   if (!t.failedTiers.includes("sol")) return `astra is escalation-only: ${t.id} has no verified sol failure yet.`
+  if (tier === "astra-max" && !t.failedTiers.includes("astra")) return `${t.id} has no verified Astra xhigh failure yet.`
   return null
 }
 
@@ -236,25 +252,13 @@ export const taskFolder = (dir: string, t: Task) => {
  * almost nothing, and the probe is checked cheaply against the verified main result. Shadows (one tier
  * below the routed tier) run on a share of eligible tasks to measure over-allocation directly.
  */
-export function wantsProbes(t: Task, tier: Tier, depth: number, cfg: Config, luna: { p: number; n: number }, freeProbeSlots: number, rnd: () => number) {
-  if (t.attempts.length > 0 || freeProbeSlots <= 0) return []
-  if (needsProbePair(t)) return freeProbeSlots >= 2 ? [
-    { tier: "luna", kind: "paired" }, { tier: "terra", kind: "paired" },
-  ] satisfies Probe[] : []
-  const out: Probe[] = []
-  const uncertain = t.hi - t.lo >= 1 || luna.n < cfg.explore_min_n || (luna.p > 0.15 && luna.p < 0.85)
-  const lunaWanted = cfg.probe_luna === "most" || (cfg.probe_luna === "uncertain" && t.type !== "explore" && t.lo <= 3 && uncertain)
-  if (tier !== "luna" && lunaWanted) out.push({ tier: "luna", kind: "luna" })
-  const i = STARTABLE.indexOf(tier)
-  const rate = cfg.data_mode !== "lean" && t.difficulty >= 3 ? Math.max(0.6, cfg.shadow_rate) : cfg.shadow_rate
-  if ((i >= 2 || (t.difficulty >= 3 && tier === "luna" && cfg.data_mode !== "lean")) && rate > 0 && rnd() < rate)
-    out.push({ tier: "terra", kind: "shadow" })
-  return out.slice(0, freeProbeSlots)
+export function wantsProbes(t: Task, freeProbeSlots: number): Probe[] {
+  if (t.attempts.length || freeProbeSlots < MATCHED_PROBES.length) return []
+  return MATCHED_PROBES.map((tier) => ({ tier, kind: "paired" }))
 }
-export const needsProbePair = (t: Task) => !t.attempts.length && (t.difficulty === 5 || t.origDifficulty === 5)
 
 // ---------- cross-checks: a second checker one model below or above the regular one ----------
-const VAGENT: Record<Tier, string> = { luna: "r-verifier-l", terra: "r-verifier-t", sol: "r-verifier-s", astra: "r-verifier-a" }
+const VAGENT: Partial<Record<Tier, string>> = { luna: "r-verifier-l", "terra-low": "r-verifier-t", "sol-low": "r-verifier-s-low", sol: "r-verifier-s", astra: "r-verifier-a" }
 export const verifierAgent = (t: Tier) => VAGENT[t]
 
 /**
@@ -264,11 +268,11 @@ export const verifierAgent = (t: Tier) => VAGENT[t]
  */
 export function checkProbes(t: Task, regular: Tier, cfg: Config, rnd: () => number): CheckRun[] {
   const out: CheckRun[] = []
-  if (regular === "terra") {
+  if (regular === "terra-low") {
     if (rnd() < cfg.check_down_rate.terra) out.push({ tier: "luna", role: "down" })
     if (rnd() < cfg.check_up_rate.terra) out.push({ tier: "sol", role: "up" })
   } else if (regular === "sol") {
-    if (rnd() < cfg.check_down_rate.sol) out.push({ tier: "terra", role: "down" })
+    if (rnd() < cfg.check_down_rate.sol) out.push({ tier: "terra-low", role: "down" })
     if (t.priority <= 2 && rnd() < cfg.check_up_rate.sol) out.push({ tier: "astra", role: "up" })
   } else if (regular === "astra") {
     if (cfg.astra_down_probe === "p1" || (cfg.astra_down_probe === "headline" && t.verify === "V4")) out.push({ tier: "sol", role: "down" })
@@ -295,8 +299,8 @@ export function resolution(regular: CheckRun, extras: CheckRun[], used: number, 
   const pair = (a: Tier, b: Tier) => dis.some((x) => (regular.tier === a && x.tier === b) || (regular.tier === b && x.tier === a))
   const budget = used < cfg.max_adjudications
   if (pair("sol", "astra")) return budget ? { adj: { kind: "reconcile", tier: "astra", agent: "r-verifier-a + r-verifier-s" }, unresolved: false } : { unresolved: true }
-  if (pair("terra", "sol")) return budget ? { adj: { kind: "arbitrate", tier: "astra", agent: "r-verifier-a" }, unresolved: false } : { unresolved: true }
-  if (pair("luna", "terra")) return budget && rnd() < cfg.luna_audit_rate ? { adj: { kind: "audit", tier: "sol", agent: "r-verifier-s" }, unresolved: false } : { unresolved: false }
+  if (pair("terra-low", "sol")) return budget ? { adj: { kind: "arbitrate", tier: "astra", agent: "r-verifier-a" }, unresolved: false } : { unresolved: true }
+  if (pair("luna", "terra-low")) return budget && rnd() < cfg.luna_audit_rate ? { adj: { kind: "audit", tier: "sol", agent: "r-verifier-s" }, unresolved: false } : { unresolved: false }
   return { unresolved: false }
 }
 
@@ -355,11 +359,11 @@ export function render(L: Ledger) {
   return [
     "# Task ledger (generated from ledger.jsonl; do not edit by hand)", "",
     order.map((s) => `${s}: ${tasks.filter((t) => t.status === s).length}`).join(" | "), "",
-    "| id | status | prio | type | diff | verify | attempts | probes | deps | title | last note |",
+    "| id | status | prio | type | working grade (original) | verify | attempts | probes | deps | title | last note |",
     "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
     ...tasks
       .sort((a, b) => order.indexOf(a.status) - order.indexOf(b.status) || a.id.localeCompare(b.id))
-      .map((t) => `| ${t.id} | ${t.status}${r.has(t.id) ? " (ready)" : ""} | P${t.priority} | ${t.type}${t.tags.length ? ` [${t.tags.join(",")}]` : ""} | ${t.lo === t.hi ? t.difficulty : `${t.difficulty} (${t.lo}-${t.hi})`} | ${t.verify} | ${t.attempts.map((a) => `${a.tier}${a.routes ? `x${a.routes.length}` : ""}:${a.verdict ?? "…"}${a.repairUsed ? "+r" : ""}`).join(" ")} | ${t.probes.map((p) => `${p.tier}${p.done ? "" : "…"}`).join(" ")} | ${t.deps.join(", ")} | ${t.title.replace(/\|/g, "/")} | ${(t.notes.at(-1) ?? "").replace(/\|/g, "/")} |`),
+      .map((t) => `| ${t.id} | ${t.status}${r.has(t.id) ? " (ready)" : ""} | P${t.priority} | ${t.type}${t.tags.length ? ` [${t.tags.join(",")}]` : ""} | ${t.difficulty} (${t.origDifficulty}${t.lo === t.hi ? "" : `; range ${t.lo}-${t.hi}`}) | ${t.verify} | ${t.attempts.map((a) => `${a.tier}${a.routes ? `x${a.routes.length}` : ""}:${a.verdict ?? "…"}${a.repairUsed ? "+r" : ""}`).join(" ")} | ${t.probes.map((p) => `${p.tier}${p.done ? "" : "…"}`).join(" ")} | ${t.deps.join(", ")} | ${t.title.replace(/\|/g, "/")} | ${(t.notes.at(-1) ?? t.gradeReason ?? "").replace(/\|/g, "/")} |`),
     "", "Gates: " + (L.gates.map((g) => `${g.kind}@${g.doneAt}`).join(", ") || "none"), "",
   ].join("\n")
 }

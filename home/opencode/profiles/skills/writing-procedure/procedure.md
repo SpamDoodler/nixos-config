@@ -4,6 +4,7 @@
 
 - `BRIEF.md`: genre, venue, reader, length, sources, rigor, format (`.tex` or `.md`), the message in one sentence (draft). For lecture notes also: the reader's baseline (what a master's student is assumed to know) and the project the notes prepare for.
 - `EVIDENCE.md`: what may be claimed and how strongly (from `w-digest`).
+- `LITERATURE.md`: verified references, citation roles and coverage gaps (from `w-literature`; internal working file).
 - `STYLE.md`: the user's voice, if samples were given (from `w-digest`).
 - `STORY.md`: message, reader, takeaways, paragraph-level outline, figure plan (from `w-architect`).
 - `draft.tex` or `draft.md`, plus `figures/`.
@@ -14,7 +15,8 @@
 
 1. **Brief.** If `BRIEF.md` is missing, write it from the request. Interactive: confirm genre, reader and message with the user in one round of questions (the question tool). Under /goal: infer, write your assumptions at the top of `STATUS.md`, and proceed.
 2. **Evidence.** Launch `w-digest` with the brief and the source folders (typically `research/` and `review/`, plus any reference the brief names). It writes `EVIDENCE.md`, and `STYLE.md` if voice samples are given. Read `EVIDENCE.md` yourself in full: it is short by design, and everything later rests on it. Because the digest is written by a cheaper model, check it one level up: compare every headline claim and five other randomly chosen claims against their source files, including the numbers. If any is wrong, send the digest back with the list.
-3. **Story.** Launch `w-architect` with `BRIEF.md`, `EVIDENCE.md` and the genre. It writes `STORY.md`. Check it before drafting:
+   For lecture notes and papers, launch `w-literature` alongside the digest using the brief and cited sources. Once both reports are in, reconcile the audit with the actual prerequisites or headline claims; verify material attribution and overlap against the sources. For lecture notes, give the auditor the prerequisite inventory to fill remaining reading gaps and verify the final recommendations before planning their placement. For reports, audit when the brief or substantive citations call for it.
+3. **Story.** Launch `w-architect` with `BRIEF.md`, `EVIDENCE.md`, `LITERATURE.md` if applicable, and the genre. It writes `STORY.md`. Check it before drafting:
    - every outline claim maps to an `EVIDENCE.md` item at a level that supports it;
    - nothing rests on an open BLOCKING review finding;
    - in a math paper, every Theorem has mathematical-level support;
@@ -32,6 +34,7 @@
    3. Send the memo as a follow-up to the drafter's session, so it revises with its own context. If the reader's one-sentence message differs from `STORY.md`, that comes first, before anything else.
 6. **Line edit.** When structure and fidelity are clean: run `stylecheck`, launch `w-editor` with the flags and the style skill, then run `stylecheck` again and `w-fidelity` in `diff` mode on the edited sentences. Editing must not change what is claimed.
 7. **Technical consistency.** For papers, launch `w-fidelity` on the final draft (notation, numbers between text, tables and figures, cross-references).
+   Include `LITERATURE.md` and the bibliography in fidelity checks. Recheck new or materially changed citations before signing off. If the project provides a bibliography build or check, use its documented workflow via the local Nix flake when available; report if not run. Verify that lecture notes actually contain the researched Further reading section, not just an internal plan.
 8. **Final check.** End `STATUS.md` with this block and repeat it in your reply:
 
 ```
@@ -40,6 +43,8 @@ FINAL CHECK
 [x] w-fidelity: no overclaims, no unsupported claims, numbers match (reviews/round-n-fidelity.md)
 [x] stylecheck: PASS, or each remaining WARN justified in STATUS.md (writing/<slug>/lint-history.jsonl)
 [x] genre rules: rigor labels match evidence; required sections present
+[x] citations: material references appear at point of use and resolve to real entries; no unresolved citation placeholders
+[x] further reading: lecture notes include a short annotated, researched selection with verified locators (otherwise N/A)
 [x] self-contained: stylecheck shows 0 artifact references and 0 placeholders (papers); lecture notes: gap list empty (reviews/round-n-gaps.md)
 [x] technical consistency: no unresolved items (papers only)
 FINAL CHECK: PASS
@@ -50,6 +55,7 @@ FINAL CHECK: PASS
 | Work | Done by | Checked by |
 | --- | --- | --- |
 | Evidence digest | `w-digest` (terra) | you (sol): spot-check against the sources |
+| Literature audit | `w-literature` (terra) | you (sol): verify material citations and the final wording |
 | Story and outline | `w-architect` (astra) | you (sol), with the checklist in step 3 |
 | Draft | `w-drafter` (sol) | `w-fidelity` (sol, fresh session) for claims; `w-reader` for readability |
 | Figures | `w-figure` (terra) | you (sol): look at each PNG against its message; `w-fidelity` checks the numbers |

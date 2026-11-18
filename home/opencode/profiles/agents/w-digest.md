@@ -35,7 +35,7 @@ You decide what the writer is allowed to say. Read carefully; the writer will tr
 # Evidence for <slug>
 
 ## Writable claims
-| id | claim, exactly, with its conditions | evidence level (1-5) | rigor (P/M) | source files | how to phrase |
+| id | claim, exactly, with its conditions | evidence level (1-5) | rigor (P/M/L) | source files or Lean certificate | how to phrase |
 | --- | --- | --- | --- | --- | --- |
 
 ## Not writable as established

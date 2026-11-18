@@ -5,9 +5,14 @@ import { appendFileSync, closeSync, constants, existsSync, fstatSync, ftruncateS
 import { basename, dirname, join } from "node:path"
 
 /** Full escalation ladder. Only STARTABLE tiers can be a first attempt; astra is reached by escalation only. */
-export const LADDER = ["luna", "terra", "sol", "astra"] as const
+export const LADDER = ["luna", "terra-low", "terra", "sol-low", "sol", "astra", "astra-max"] as const
 export type Tier = (typeof LADDER)[number]
-export const STARTABLE: Tier[] = ["luna", "terra", "sol"]
+export const tierVariants = {
+  luna: ["luna", "medium"], "terra-low": ["terra", "low"], terra: ["terra", "medium"],
+  "sol-low": ["sol", "low"], sol: ["sol", "high"], astra: ["astra", "xhigh"], "astra-max": ["astra", "max"],
+} as const satisfies Record<Tier, readonly [string, string]>
+export const STARTABLE: Tier[] = ["luna", "terra-low", "sol-low", "sol"]
+export const MATCHED_PROBES = ["luna", "terra-low", "terra", "sol-low"] as const
 export const TYPES = ["lookup", "literature", "derivation", "numerics", "code", "analysis", "explore", "other"]
 
 // ---------- config ----------
@@ -40,16 +45,16 @@ export interface Config {
   parallelism_target: number
 }
 export const DEFAULTS: Config = {
-  cost: { luna: 1, terra: 4, sol: 15, astra: 60 },
-  latency: { luna: 2, terra: 2.5, sol: 4, astra: 6 },
+  cost: { luna: 1, "terra-low": 2, terra: 4, "sol-low": 7, sol: 15, astra: 60, "astra-max": 120 },
+  latency: { luna: 2, "terra-low": 1.5, terra: 2.5, "sol-low": 2, sol: 4, astra: 6, "astra-max": 12 },
   verify_cost: 1,
   verify_latency: 1.5,
   rescope_cost: 30,
   time_weight: 1,
-  weights: { luna: 0.05, terra: 0.3, sol: 1, astra: 3 },
+  weights: { luna: 0.05, "terra-low": 0.3, terra: 0.3, "sol-low": 1, sol: 1, astra: 3, "astra-max": 3 },
   cache_read_weight: 0.1,
   learned_cost_min_n: 5,
-  prior_cap: { luna: 2, terra: 3, sol: 4, astra: 5 },
+  prior_cap: { luna: 2, "terra-low": 2, terra: 3, "sol-low": 3, sol: 4, astra: 5, "astra-max": 5 },
   prior_strength: 2,
   explore_rate: 0.15,
   explore_min_n: 5,
@@ -235,6 +240,39 @@ export function effective(o: Outcome): 1 | 0 | null {
   return verifierPassed(o) ? 1 : 0
 }
 
+// Learn from completed checks, not worker self-reports or missing evidence.
+// A weaker worker's clean solve outweighs a stronger worker's failures.
+export function difficultyEvidence(outs: Outcome[]) {
+  if (outs.some((o) => o.tier === "luna" && o.verdict === "pass" && effective(o) === 1))
+    return { delta: -1, reason: "Luna produced a clean, verified solve" }
+  const failures = new Set(outs.filter((o) =>
+    !o.shadow && !o.route && o.verdict === "fail" && effective(o) === 0 &&
+    !outs.some((other) => other.tier === o.tier && effective(other) === 1)).map((o) => o.tier))
+  if (failures.size >= 2)
+    return { delta: 1, reason: `verified failures at ${[...failures].join(" and ")}` }
+  if (outs.some((o) => effective(o) === 1)) return { delta: 0, reason: "verified solve at another tier" }
+  return { delta: 0, reason: "not enough comparable evidence" }
+}
+
+export const shiftDifficulty = (grade: number, delta: number) => Math.min(5, Math.max(1, grade + delta))
+
+export function calibrateDifficulty(outs: Outcome[], task: { id: string; difficulty: number; type: string; tags?: string[] }) {
+  const groups = new Map<string, Outcome[]>()
+  for (const o of outs) {
+    if (o.task_id === task.id || o.difficulty !== task.difficulty || o.type !== task.type ||
+        (task.tags?.length && !task.tags.some((tag) => o.tags?.includes(tag)))) continue
+    const key = JSON.stringify([o.project, o.task_id])
+    groups.set(key, [...(groups.get(key) ?? []), o])
+  }
+  const evidence = [...groups.values()].map(difficultyEvidence).filter((e) => e.reason !== "not enough comparable evidence")
+  const down = evidence.filter((e) => e.delta < 0).length
+  const up = evidence.filter((e) => e.delta > 0).length
+  const direction = up >= 3 && up * 3 >= evidence.length * 2 ? 1 : down >= 3 && down * 3 >= evidence.length * 2 ? -1 : 0
+  const grade = shiftDifficulty(task.difficulty, direction)
+  return { grade, reason: grade === task.difficulty ? undefined :
+    `workspace calibration: ${direction > 0 ? up : down}/${evidence.length} comparable tasks support ${direction > 0 ? "raising" : "lowering"} the starting grade` }
+}
+
 // ---------- routing ----------
 function prior(tier: Tier, d: number, cfg: Config) {
   const cap = cfg.prior_cap[tier]
@@ -263,19 +301,20 @@ export function cell(outs: Outcome[], tier: Tier, type: string, d: number, cfg: 
   return { p, sd, lcb: Math.max(0, p - 0.84 * sd), nExact, nEff: s + f }
 }
 
-/** Replace the prior attempt costs by measured allowance once every startable tier has enough priced attempts. */
+/** Replace each deployment's prior cost once it has enough priced attempts. */
 export function withLearnedCost(cfg: Config, outs: Outcome[]): Config & { learned: boolean } {
   const mean = (t: Tier) => {
-    const xs = outs.filter((o) => o.tier === t && typeof o.allowance === "number").map((o) => o.allowance!)
+    const xs = outs.filter((o) => o.tier === t && typeof o.allowance === "number" && Number.isFinite(o.allowance) && o.allowance > 0).map((o) => o.allowance!)
     return xs.length >= cfg.learned_cost_min_n ? xs.reduce((a, b) => a + b, 0) / xs.length : null
   }
   const m = Object.fromEntries(LADDER.map((t) => [t, mean(t)])) as Record<Tier, number | null>
-  if (STARTABLE.some((t) => m[t] === null)) return { ...cfg, learned: false }
-  const scale = m.sol! / cfg.cost.sol
+  const weighted = STARTABLE.filter((t) => m[t] !== null)
+  if (!weighted.length) return { ...cfg, learned: false }
+  const scale = m.sol !== null ? m.sol / cfg.cost.sol : weighted.reduce((sum, t) => sum + m[t]! / cfg.cost[t], 0) / weighted.length
   const checks = outs.filter((o) => typeof o.allowance_check === "number").map((o) => o.allowance_check!)
   return {
     ...cfg, learned: true,
-    cost: { luna: m.luna!, terra: m.terra!, sol: m.sol!, astra: m.astra ?? cfg.cost.astra * scale },
+    cost: Object.fromEntries(LADDER.map((t) => [t, m[t] ?? cfg.cost[t] * scale])) as Record<Tier, number>,
     verify_cost: checks.length >= cfg.learned_cost_min_n ? checks.reduce((a, b) => a + b, 0) / checks.length : cfg.verify_cost * scale,
     rescope_cost: cfg.rescope_cost * scale,
     time_weight: cfg.time_weight * scale,
@@ -290,14 +329,14 @@ export function route(outs: Outcome[], type: string, d: number, cfg0: Config, o:
   const priority = o.priority ?? 2
   const depth = o.depth ?? 1
   const w = cfg.time_weight * urgency(depth, priority)
-  const ladder: Tier[] = priority === 1 ? [...LADDER] : STARTABLE
+  const ladder: Tier[] = priority === 1 ? [...STARTABLE, "astra"] : STARTABLE
   const cells = ladder.map((tier) => ({ tier, ...cell(outs, tier, type, d, cfg) }))
   const E: number[] = []
   for (let i = ladder.length - 1; i >= 0; i--) {
     const next = i === ladder.length - 1 ? cfg.rescope_cost : E[i + 1]
     E[i] = cfg.cost[ladder[i]] + cfg.verify_cost + w * (cfg.latency[ladder[i]] + cfg.verify_latency) + (1 - cells[i].p) * next
   }
-  const minStart = d >= 4 ? 2 : priority === 1 ? 1 : 0
+  const minStart = d >= 5 ? STARTABLE.indexOf("sol") : d === 4 ? STARTABLE.indexOf("sol-low") : priority === 1 ? 1 : 0
   let best = minStart
   for (let i = minStart + 1; i < STARTABLE.length; i++) if (E[i] < E[best]) best = i
   let pick = best, explore = false
@@ -305,7 +344,7 @@ export function route(outs: Outcome[], type: string, d: number, cfg0: Config, o:
   if (o.lowStakes && priority > 1 && depth <= 1 && best > minStart && cells[best - 1].nExact < cfg.explore_min_n && rnd() < cfg.explore_rate) { pick = best - 1; explore = true }
   const n = cells[best].nExact
   return {
-    recommended: ladder[pick], explore, costBasis: cfg.learned ? "measured allowance" : "prior weights",
+    recommended: ladder[pick], explore, costBasis: cfg.learned ? "mixed measured allowance and priors" : "prior weights",
     evidence: n >= 10 ? "rich" : n >= 3 ? "ok" : "thin",
     luna: { p: cells[0].p, sd: cells[0].sd, n: cells[0].nExact },
     table: cells.map((c, i) => ({ tier: c.tier, p_pass: +c.p.toFixed(2), n_exact: c.nExact, expected_cost: +E[i].toFixed(2) })),
@@ -314,10 +353,12 @@ export function route(outs: Outcome[], type: string, d: number, cfg0: Config, o:
 
 export function usageAllowance(events: any[], cfg: Config) {
   const sessions = new Map<string, Usage>()
-  for (const event of events) if (event.kind === "usage" && event.session) sessions.set(event.session, event)
+  // Older profiles recorded writer usage in the research log.
+  for (const event of events) if (event.kind === "usage" && event.session && !String(event.agent).startsWith("w-")) sessions.set(event.session, event)
   let total = 0
   for (const usage of sessions.values()) {
-    const tier = LADDER.find((tier) => usage.model?.split("#")[0].endsWith(`-${tier}`))
+    const [model, effort] = usage.model?.split("#") ?? []
+    const tier = LADDER.find((tier) => model?.endsWith(`-${tierVariants[tier][0]}`) && effort === tierVariants[tier][1])
     if (tier) total += effTokens(usage, cfg) * cfg.weights[tier] / 1000
   }
   return total
@@ -468,7 +509,7 @@ export function report(all: Outcome[], cfg: Config): string {
       L.push(`| ${t} | ${xs.length} | ${Math.round(xs.reduce((a, o) => a + (o.tokens ?? 0), 0) / xs.length)} | ${(al / xs.length).toFixed(2)} | ${wins ? (al / wins).toFixed(2) : "-"} | ${ch.length ? (ch.reduce((a, o) => a + o.allowance_check!, 0) / ch.length).toFixed(2) : "-"} |`)
     }
     const lc = withLearnedCost(cfg, outs)
-    L.push("", lc.learned ? "Routing now uses these measured costs." : `Routing still uses the prior weights; it switches to measured cost once every startable tier has ${cfg.learned_cost_min_n} priced attempts.`)
+    L.push("", lc.learned ? "`bench route` uses measured costs where there are enough samples and scaled priors elsewhere; dispatch is unchanged." : `\`bench route\` uses prior costs until a startable deployment has ${cfg.learned_cost_min_n} priced attempts; dispatch is unchanged.`)
   }
 
   // Pass rate by tier and difficulty.
@@ -481,12 +522,12 @@ export function report(all: Outcome[], cfg: Config): string {
 
   // Grading calibration, and whether the stated uncertainty means anything.
   L.push("", "## Grading calibration: lowest observed passing tier", "", "One cheaper failure does not prove a minimum tier.", "",
-    "| assigned | luna | terra | sol | astra | no observed pass |", "| --- | --- | --- | --- | --- | --- |")
+    `| assigned | ${LADDER.join(" | ")} | no observed pass |`, `| --- |${LADDER.map(() => " --- |").join("")} --- |`)
   for (let d = 1; d <= 5; d++) {
     const xs = tr.filter((r) => r.assigned === d)
     if (!xs.length) continue
     const c = (t: Tier) => xs.filter((r) => r.minTier === t).length
-    L.push(`| ${d} | ${c("luna")} | ${c("terra")} | ${c("sol")} | ${c("astra")} | ${xs.filter((r) => !r.minTier).length} |`)
+    L.push(`| ${d} | ${LADDER.map(c).join(" | ")} | ${xs.filter((r) => !r.minTier).length} |`)
   }
   const byWidth = [0, 1, 2].map((w) => tr.filter((r) => (w < 2 ? r.width === w : r.width >= 2)))
   if (byWidth[1].length || byWidth[2].length)
@@ -589,7 +630,7 @@ export function reviewReport(ev: any[]): string {
     L.push("", "## Blind re-derivation calibration", "",
       "| tier | difficulty | rigor | solved | incorrect | unresolved | ungraded | pending |",
       "| --- | --- | --- | --- | --- | --- | --- | --- |")
-    for (const tier of LADDER) for (let d = 1; d <= 5; d++) for (const rigor of ["P", "M"]) {
+    for (const tier of LADDER) for (let d = 1; d <= 5; d++) for (const rigor of ["P", "M", "L"]) {
       const runs = derive.filter((c) => c.tier === tier && c.difficulty === d && c.rigor === rigor)
       if (!runs.length) continue
       const results = runs.map((c) => grades.get(checkKey(c)) ?? "pending")
@@ -606,7 +647,7 @@ export function reviewReport(ev: any[]): string {
     L.push("", "Lowest tier observed to solve each task (not a minimum capability guarantee):",
       ...[...tasks.values()].map((task) => {
         const runs = derive.filter((c) => c.review === task.review && c.task_id === task.task)
-        const missing = ["luna", "terra", "sol"].filter((tier) => !runs.some((c) => c.tier === tier))
+        const missing = [...MATCHED_PROBES, "sol"].filter((tier) => !runs.some((c) => c.tier === tier))
         return `- ${task.review}/${task.task}: ${task.tier ?? "no verified solve"}${missing.length ? `; missing runs: ${missing.join(", ")}` : ""}`
       }))
   }

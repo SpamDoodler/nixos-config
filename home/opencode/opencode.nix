@@ -172,6 +172,7 @@
       args=("$@")
       proxy=""
       proxy_indices=()
+      standalone_indices=()
       private_server=0
       external_server=0
       scratch="''${OPENCODE_WORKSPACE_TMP:-1}"
@@ -202,7 +203,7 @@
             break ;;
           --dir) workspace="''${args[i+1]:-$workspace}"; i=$((i+1)) ;;
           --dir=*) workspace="''${args[i]#--dir=}" ;;
-          --standalone) private_server=1 ;;
+          --standalone) private_server=1; standalone_indices+=("$i") ;;
           --server) external_server=1; i=$((i+1)) ;;
           --server=*) external_server=1 ;;
           --attach|--attach=*|--help|--help=*|-h|--version|--version=*|-v) scratch=0 ;;
@@ -222,6 +223,14 @@
             fi ;;
         esac
       done
+      if [[ -n "$proxy" ]]; then
+        if ((external_server)); then
+          echo 'opencode: --proxy requires a private server; remove --server.' >&2
+          exit 2
+        fi
+        # The Privoxy supervisor adds exactly one --standalone itself.
+        proxy_indices+=("''${standalone_indices[@]}")
+      fi
       for index in "''${proxy_indices[@]}"; do
         unset "args[$index]"
       done
@@ -334,7 +343,7 @@ in {
         "agents": ${builtins.toJSON agents},
         "commands": ${builtins.toJSON commands},
         "providers": {"openai": {"models": {"${model}": {
-          "settings": {"reasoningEffort": "high", "textVerbosity": "low"},
+          "settings": {"reasoningEffort": "medium", "textVerbosity": "low"},
           "variants": [
             {"id": "economy", "settings": {"reasoningEffort": "low"}},
             {"id": "balanced", "settings": {"reasoningEffort": "medium"}},

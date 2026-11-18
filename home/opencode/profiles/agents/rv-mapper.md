@@ -29,11 +29,12 @@ You map the review snapshot in `review/<slug>/target/` (you cannot see `research
 1. **Main results.** The 1-5 claims the document exists to establish (abstract, conclusions, headline equations). Give each an id `M1..`.
 2. **Claim list.** One row per claim, in document order:
 
-   | id | location | statement (<= 25 words) | kind | declared rigor | depends on | load-bearing |
-   | --- | --- | --- | --- | --- | --- | --- |
+   | id | location | statement (<= 25 words) | kind | declared rigor | scope and candidate obligations | depends on | load-bearing |
+   | --- | --- | --- | --- | --- | --- | --- | --- |
 
    - `kind`: definition, assumption, derivation step, approximation, numerical result, cited result, interpretation.
    - `declared rigor`: `M` if the author marks it as theorem, proposition, "we prove" or "rigorously"; otherwise `-`.
+   - `scope and candidate obligations`: what is asserted (formal, approximate, exact analytic, numerical, or other), applicable domain/regime, and any load-bearing assumptions or operations the lead should check. Do not score them.
    - `depends on`: ids of the claims it uses directly. Include hidden dependencies you notice (used but not stated).
    - `load-bearing`: `yes` if any main result depends on it through the dependency chain, with the chain written out for the first few; otherwise `no`.
 3. **Conventions.** Units, sign conventions, metric signature, Fourier and normalisation conventions, notation for key quantities. These are the reference for the consistency check.

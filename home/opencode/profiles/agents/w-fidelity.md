@@ -30,11 +30,11 @@ Read `EVIDENCE.md` and the draft. For every factual or technical claim in the dr
 3. Compare conditions, numbers, units, uncertainties and signs with the source. Any difference is a **mismatch**. Check equations symbol by symbol against the source result.
 4. Rigor labels: a Theorem, Proposition or Lemma needs rigor M in `EVIDENCE.md`. Otherwise it is **mislabelled**.
 5. **Self-containment.** For a paper: every result the text relies on is derived or described in the document (main text or appendix) or cited from the literature. Any pointer into the research files, task or claim ids, evidence levels, or mention of the research process is an issue (`not self-contained`). For lecture notes, such pointers are allowed only inside marked project boxes.
-6. Positioning: claims of novelty or of being "first" must be backed by `research/lit` notes, or are **unsupported**.
+6. **Citations.** Cross-check the draft and bibliography against `LITERATURE.md` when applicable. Flag material sourced claims without citations, missing or misassigned entries, unresolved citation placeholders, and citations that do not support their use. For lecture notes, check that the actual Further reading section uses verified, useful locators and annotations suitable for the stated baseline. For papers, flag uncredited overlap or unsupported priority claims; a bounded search does not prove priority.
 
 ## Mode `diff`
 
-You get the previous and current versions (or the edited passages). Check only that each edit preserves the claim, its strength, conditions and numbers. Report any change in meaning.
+You get the previous and current versions (or the edited passages). Check that each edit preserves the claim, its strength, conditions, numbers and scope of attribution. Flag any removed or newly unsupported citation.
 
 ## Output
 

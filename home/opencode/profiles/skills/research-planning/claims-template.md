@@ -18,3 +18,8 @@ Status:
 - `refuted`: a verified result contradicts it. Keep the row; refuted claims are part of the answer.
 
 When two claims conflict, both drop to `conjecture` until resolved.
+
+For L scope, track each substantive claim's target rigor, Lean file and
+declaration, and certificate status and evidence separately from its V-level.
+Certified claims require a matching statement, replay and axiom audit under
+the `rigor` skill. Do not promote an uncertified L claim as established.

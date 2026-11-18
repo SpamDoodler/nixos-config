@@ -23,7 +23,7 @@ Work out the relation between <A> and <B>.
 <e.g. "an explicit map, or an argument that none exists"; "the leading correction in g, with its range of validity">
 
 ## Rigor
-physics level | math level for <specific claims>
+P (physics) | M (mathematical) | L (Lean-certified); specify scope or claim-level overrides
 
 ## Known
 <what you already know or suspect; dead ends you have hit>

@@ -14,7 +14,7 @@ From these the report computes, per role and model: **precision** (share of its 
 
 Register each tier's run with `rv_check role=derive task_id=<shared-id> difficulty=<1–5> rigor=P|M` before seeing results. After checking the saved blind work against a validated reference, record `rv_derive review=<slug> check_id=<run> derive_result=solved|incorrect|unresolved|ungraded`. `solved` requires a complete independent derivation at the stated rigor, not a matching final expression. `incorrect` is a completed but wrong derivation; `unresolved` includes partial attempts and budget limits; `ungraded` means there is no reliable reference yet (or the blind attempt is contaminated). Never assume the manuscript is right.
 
-The report groups attempts by the pre-run rating and rigor, separately from finding recall. Pending and ungraded runs are not evidence of failure. The cheapest verified success is evidence for this setup and budget, not proof that it is the minimum capable tier. Keep this calibration separate from novel research routing.
+Use `rigor=L` for Lean-certified attempts; include a `note` pointing to the saved statement match, replay and axiom audit before recording `solved`. A prose derivation does not count. The report groups attempts by the pre-run rating and rigor, separately from finding recall. Pending and ungraded runs are not evidence of failure. The cheapest verified success is evidence for this setup and budget, not proof that it is the minimum capable tier. Keep this calibration separate from novel research routing.
 
 ## Planted-error reviews (`/review-bench`)
 

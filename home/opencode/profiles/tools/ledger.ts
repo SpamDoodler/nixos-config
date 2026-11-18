@@ -1,9 +1,9 @@
 import { tool } from "../lib/tool.ts"
 import { existsSync } from "node:fs"
-import { appendJsonl, appendText, benchPath, ledgerMdPath, ledgerPath, loadConfig, loadOutcomes, now, project, readJsonl, readText, route, STARTABLE, usageAllowance, workspacePath, writeText, type Tier } from "../lib/core.ts"
-import { active, audit, cardExists, cardPath, checkMode, checkerPolicy, checkProbes, downstream, fold, footer, needsProbePair, nextTier, probesActive, ready, render, renderStats, resolution, stats, taskFolder, tierGuard, tierIdx, vclass, verifierAgent, wantsProbes, type Attempt, type CheckRun, type Task } from "../lib/ledger.ts"
+import { appendJsonl, appendText, benchPath, LADDER, MATCHED_PROBES, ledgerMdPath, ledgerPath, loadConfig, now, project, readJsonl, readText, route, STARTABLE, usageAllowance, workspacePath, writeText, type Tier } from "../lib/core.ts"
+import { active, audit, cardExists, cardPath, checkMode, checkerPolicy, checkProbes, downstream, fold, footer, nextTier, probesActive, ready, render, renderStats, resolution, stats, taskFolder, tierGuard, tierIdx, vclass, verifierAgent, wantsProbes, type Attempt, type CheckRun, type Task } from "../lib/ledger.ts"
 
-const TIERS = ["luna", "terra", "sol", "astra"] as const
+const TIERS = LADDER
 const VERDICTS = ["pass", "pass_with_issues", "fail", "incomplete", "wrong_question"] as const
 const passed = (v?: string) => v === "pass" || v === "pass_with_issues"
 
@@ -58,13 +58,15 @@ export default tool({
     const cfg = loadConfig()
     const bench = ctx.modelSet ? benchPath(dir, ctx.modelSet) : undefined
     const benchmark = (event: object) => { if (bench) appendJsonl(bench, event) }
-    const outcomes = () => bench ? loadOutcomes(bench, cfg, readJsonl(ledgerPath(dir))) : []
     const log = (e: object) => appendJsonl(ledgerPath(dir), { t: now(), ...e })
     const load = () => fold(readJsonl(ledgerPath(dir)))
     if (readJsonl(ledgerPath(dir)).some((e) => e.op === "update" && e.tier))
       return "REFUSED: this workspace uses a legacy ledger. Preserve it and start a fresh ledger, transferring prior evidence and unfinished tasks explicitly."
     const finish = (msg: string) => { const L = load(); writeText(ledgerMdPath(dir), render(L)); return msg + footer(L, cfg) }
     const L = load()
+    // Benchmark history is for manual review, not for choosing production workers.
+    const startTier = (t: Task, depth: number) =>
+      route([], t.type, t.difficulty, cfg, { priority: t.priority, depth }).recommended
     const task = a.id ? L.tasks.get(a.id) : undefined
     if (["dispatch", "probe_finished", "probe_ungraded", "check", "verdict", "adjudicate", "update"].includes(a.action) && !task) return finish(`ERROR: unknown or missing task id "${a.id ?? ""}".`)
     const outcomeBase = (t: Task) => ({
@@ -146,13 +148,11 @@ export default tool({
       }
 
       case "ready": {
-        const outs = outcomes()
         const ds = downstream(L.tasks)
         const r = ready(L.tasks)
         if (!r.length) return finish("No ready tasks.")
         return finish([`${Math.max(0, cfg.concurrency - active(L))} free slot(s). Ready, best first:`, ...r.map((t) => {
-          const ro = route(outs, t.type, t.difficulty, cfg, { priority: t.priority, depth: ds.get(t.id)!.depth })
-          return `${t.id} P${t.priority} ${t.type} d${t.lo === t.hi ? t.difficulty : `${t.difficulty}(${t.lo}-${t.hi})`} ${t.verify} -> ${ro.recommended}${ro.explore ? " (explore)" : ""} [${ro.evidence}]${cardExists(dir, t) ? "" : " NO CARD"} | ${t.title}`
+          return `${t.id} P${t.priority} ${t.type} d${t.lo === t.hi ? t.difficulty : `${t.difficulty}(${t.lo}-${t.hi})`} ${t.verify} -> ${startTier(t, ds.get(t.id)!.depth)}${cardExists(dir, t) ? "" : " NO CARD"} | ${t.title}`
         })].join("\n"))
       }
 
@@ -165,24 +165,26 @@ export default tool({
         const blockers = t.deps.filter((d) => L.tasks.get(d)?.status !== "done")
         if (blockers.length) return finish(`REFUSED: ${t.id} waits on ${blockers.join(", ")}.`)
         if (!cardExists(dir, t)) return finish(`REFUSED: no card at ${cardPath(dir, t)}.`)
-        const outs = outcomes()
-        const depth = downstream(L.tasks).get(t.id)!.depth
-        const ro = route(outs, t.type, t.difficulty, cfg, { priority: t.priority, depth, lowStakes: t.priority === 3 })
         let tier: Tier
         let note: string | undefined
+        if (a.tier === "astra-max" && (t.status !== "failed" || t.tier !== "astra" || !a.note?.trim() || a.routes))
+          return finish("REFUSED: Astra max requires an explicit, user-approved single escalation after Astra xhigh failed, with the approval noted.")
         if (t.status === "failed") {
-          const min = nextTier(t.tier!)
+          const min = a.tier === "astra-max" ? "astra-max" : nextTier(t.tier!)
           if (!min) return finish(`REFUSED: ${t.id} failed at every tier: re-scope, split or drop it.`)
           tier = (a.tier as Tier) ?? min
+          note = a.note
           if (tierIdx(tier) < tierIdx(min)) return finish(`REFUSED: after failing at ${t.tier}, ${t.id} goes to ${min} or higher.`)
         } else {
-          tier = (a.tier as Tier) ?? ro.recommended
-          if (a.tier && a.tier !== ro.recommended && !a.routes) {
-            if (!a.note) return finish(`REFUSED: routing says ${ro.recommended}; overriding to ${a.tier} needs a note.`)
-            note = `override ${ro.recommended}->${a.tier}: ${a.note}`
+          const recommended = startTier(t, downstream(L.tasks).get(t.id)!.depth)
+          tier = (a.tier as Tier) ?? recommended
+          if (a.tier && a.tier !== recommended && !a.routes) {
+            if (!a.note) return finish(`REFUSED: routing says ${recommended}; overriding to ${a.tier} needs a note.`)
+            note = `override ${recommended}->${a.tier}: ${a.note}`
           }
           if (!STARTABLE.includes(tier)) return finish(`REFUSED: ${tier} is never a first attempt.`)
-          if (!a.routes && t.difficulty >= 4 && tierIdx(tier) < tierIdx("sol")) return finish(`REFUSED: difficulty ${t.difficulty} starts at sol (use routes=N to try several cheaper routes instead).`)
+          if (!a.routes && t.difficulty >= 4 && tierIdx(tier) < tierIdx(t.difficulty === 5 ? "sol" : "sol-low"))
+            return finish(`REFUSED: difficulty ${t.difficulty} starts at ${t.difficulty === 5 ? "sol" : "sol-low or sol"} (use routes=N to try several cheaper routes instead).`)
           if (!a.routes && t.priority === 1 && tier === "luna") return finish("REFUSED: priority-1 tasks never start at luna.")
         }
         const guard = tierGuard(t, tier)
@@ -190,10 +192,9 @@ export default tool({
         const folder = taskFolder(dir, t)
         const card = `${folder}/card.md`
         const free = cfg.probe_slots - probesActive(L)
-        if (needsProbePair(t) && free < 2)
-          return finish(`DEFERRED: ${t.id} needs two free probe slots to start Luna and Terra blind with the main run. Do not start it separately. Record finished probe workers with ledger probe_finished to free slots.`)
-        const reserve = !needsProbePair(t) && ready(L.tasks).some((other) => other.id !== t.id && needsProbePair(other) && cardExists(dir, other)) ? 2 : 0
-        const probes = wantsProbes(t, tier, depth, cfg, ro.luna, free - reserve, Math.random)
+        if (!t.attempts.length && free < MATCHED_PROBES.length)
+          return finish(`DEFERRED: ${t.id} needs ${MATCHED_PROBES.length} free slots for its complete blind benchmark alongside the main run. Record finished probe workers with ledger probe_finished.`)
+        const probes = wantsProbes(t, free)
         const frozenCard = `${folder}/probe-card.md`
         const probeLines = () => probes.map((p) =>
           `- subagent r-probe-${p.tier}: "Read ${frozenCard}; independently execute it from the frozen inputs and write ${folder}/probe-${p.tier}/result.md. Do not read the main worker's or other probes' work." (benchmark only)`)
@@ -223,7 +224,7 @@ export default tool({
         const launchCard = probes.length ? frozenCard : card
         const lines = [`DISPATCHED ${t.id} at ${tier} (attempt ${t.attempts.length + 1}). Launch now:`,
           `- subagent r-worker-${tier}: "Execute ${launchCard}; write everything to ${folder}/."${t.status === "failed" ? " (append the checker's FAILURE_SUMMARY to the card first)" : ""}`]
-        if (t.verify === "V3" || t.verify === "V4") lines.push(`- subagent r-worker-${tier}: "Blind replication. Execute ${launchCard}; write everything to ${folder}/replica/."`)
+        if (t.verify === "V3" || t.verify === "V4") lines.push(`- subagent r-worker-${tier === "astra-max" ? "astra" : tier}: "Blind replication. Execute ${launchCard}; write everything to ${folder}/replica/."`)
         lines.push(...probeLines())
         lines.push("Keep each sessionID for repairs and `worker_session`.")
         return finish(lines.join("\n"))
@@ -252,7 +253,7 @@ export default tool({
           log({ op: "probe_finished", id: t.id, probe: p.tier })
           log({ op: "check", id: t.id, probe: p.tier })
           const frozen = existsSync(workspacePath(dir, ...`${folder}/probe-card.md`.split("/")))
-          return finish(`Launch now: fresh r-verifier-t (Terra): "Mode: reference. Card: ${folder}/${frozen ? "probe-card.md" : "card.md"}. Result: ${folder}/probe-${p.tier}/result.md. Verified reference: ${folder}/result.md. Check reasoning against the card, not just agreement. Write ${folder}/probe-${p.tier}/verdict.md; abstain if unsure." Then record checker_tier=terra, both session IDs, and verdict (or close ungraded). Do not escalate calibration to Sol or Astra.`)
+          return finish(`Launch now: fresh r-verifier-t (Terra Low): "Mode: reference. Card: ${folder}/${frozen ? "probe-card.md" : "card.md"}. Result: ${folder}/probe-${p.tier}/result.md. Verified reference: ${folder}/result.md. Check reasoning against the card, not just agreement. Write ${folder}/probe-${p.tier}/verdict.md; abstain if unsure." Then record checker_tier=terra-low, both session IDs, and verdict (or close ungraded). Do not escalate calibration to Sol High or Astra.`)
         }
         if (t.status !== "running") return finish(`REFUSED: ${t.id} is ${t.status}; check after the worker reported.`)
         const pol = checkerPolicy(t.tier!, t.priority, cfg)
@@ -287,8 +288,8 @@ export default tool({
           const p = t.probes.find((x) => x.tier === a.probe && !x.done)
           if (!p || !p.checkLaunched || !a.verdict) return finish(`REFUSED: \`ledger check id=${t.id} probe=${a.probe}\` first, and give the verdict.`)
           if (t.status !== "done") return finish("REFUSED: probe grading needs a cleared reference.")
-          if (a.checker_tier !== "terra" || !a.checker_session || !a.worker_session || a.checker_session === a.worker_session)
-            return finish("REFUSED: give distinct worker and Terra reference checker session IDs.")
+          if (a.checker_tier !== "terra-low" || !a.checker_session || !a.worker_session || a.checker_session === a.worker_session)
+            return finish("REFUSED: give distinct worker and Terra Low reference checker session IDs.")
           benchmark({ ...outcomeBase(t), tier: p.tier, attempt: 0, shadow: true, probe: p.kind, verdict: a.verdict, verify_level: "V1", worker_session: a.worker_session })
           log({ op: "verdict", id: t.id, probe: p.tier, verdict: a.verdict })
           return finish(`Probe logged: ${p.tier} ${passed(a.verdict) ? "also solved" : "did not solve"} ${t.id}.`)
@@ -366,6 +367,7 @@ export default tool({
 
       case "update": {
         const t = task!
+        if (a.difficulty !== undefined && !a.note?.trim()) return finish("REFUSED: explain the manual difficulty change with a note.")
         if (t.attempts.length && a.verify && a.verify !== t.verify) return finish("REFUSED: verification level is fixed after dispatch; add a new task for stronger verification.")
         if (a.priority === 1 && t.priority !== 1 && !a.note) return finish("REFUSED: raising priority to 1 needs a note.")
         if (a.status && a.status !== "pending" && !a.note) return finish(`REFUSED: ${a.status} needs a note.`)

@@ -27,6 +27,7 @@ set -euo pipefail
 [[ "${1:-}" == --standalone ]]
 shift
 [[ "$HTTP_PROXY" == "$HTTPS_PROXY" && "$HTTP_PROXY" == "$http_proxy" && "$HTTP_PROXY" == "$https_proxy" ]]
+[[ "$WS_PROXY" == "$HTTP_PROXY" && "$WSS_PROXY" == "$HTTP_PROXY" && "$ws_proxy" == "$HTTP_PROXY" && "$wss_proxy" == "$HTTP_PROXY" ]]
 [[ "$NO_PROXY" == localhost,127.0.0.1,::1 && "$no_proxy" == "$NO_PROXY" ]]
 [[ ! -v ALL_PROXY && ! -v all_proxy ]]
 port=${HTTP_PROXY##*:}
@@ -48,15 +49,16 @@ EOF
 chmod +x "$work/bin/"*
 export PATH="$work/bin:$PATH"
 export ALL_PROXY=must-be-unset all_proxy=must-be-unset
+export WS_PROXY=stale WSS_PROXY=stale ws_proxy=stale wss_proxy=stale
 bash "$repo/opencodeproxy.sh" 10.106.75.8:1080 --prompt 'a prompt with spaces' > "$work/one.log" 2>&1 &
 one=$!
-bash "$repo/opencodeproxy.sh" '[::1]:1081' run 'second prompt' > "$work/two.log" 2>&1 &
+bash "$repo/opencodeproxy.sh" 'socks5h://[::1]:1081' run 'second prompt' > "$work/two.log" 2>&1 &
 two=$!
 wait "$one"
 wait "$two"
 started=("$work"/started-*)
 [[ ${#started[@]} == 2 ]]
-! compgen -G "$work/port-*" >/dev/null
+if compgen -G "$work/port-*" >/dev/null; then exit 1; fi
 grep -Fq 'forward-socks5 / 10.106.75.8:1080 .' "$work"/config-*
 grep -Fq 'forward-socks5 / [::1]:1081 .' "$work"/config-*
 grep -Fxq -- '--prompt' "$work"/args-*
@@ -70,5 +72,5 @@ done
 status=0
 PROXY_TEST_EXIT=7 bash "$repo/opencodeproxy.sh" localhost:1080 > /dev/null 2>&1 || status=$?
 [[ $status == 7 ]]
-! compgen -G "$work/port-*" >/dev/null
+if compgen -G "$work/port-*" >/dev/null; then exit 1; fi
 echo 'PASS: private server, concurrent sessions, port collision retry, arguments, proxy environment, validation, exit status and cleanup'
