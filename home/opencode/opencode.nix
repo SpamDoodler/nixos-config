@@ -1,6 +1,6 @@
 # Home Manager module. Replace the previous module, then rebuild normally.
 # Do not also install pkgs.opencode or enable programs.opencode elsewhere.
-# Native V2 configuration, checked against the OpenCode 2.1.1 schema.
+# Native V2 configuration with research profiles for OpenCode 2.3.
 # Trusted local work: Python/tests can execute arbitrary code, not a sandbox.
 {
   pkgs,
@@ -8,6 +8,7 @@
   ...
 }: let
   model = "gpt-6-luna";
+  profiles = import ./profiles.nix {inherit pkgs lib;};
   # Use an explicitly supported default effort; variants remain selectable.
   rules = action: effect: resources:
     map (resource: {inherit action resource effect;}) resources;
@@ -34,7 +35,7 @@
       "webfetch"
     ]
     ++ rules "subagent" "deny" ["*"]
-    ++ rules "subagent" "allow" ["explore" "review"]
+    ++ rules "subagent" "allow" ["explore" "code-review"]
     ++ rules "skill" "deny" ["*"]
     ++ rules "skill" "allow" ["nix-validation" "opencode-config-review" "exact-computation" "graphify"]
     ++ rules "external_directory" "ask" ["*"]
@@ -65,7 +66,7 @@
     scout.disabled = true;
     build.system = ''
       Handle small tasks directly. Delegate only bounded, independent codebase
-      questions to explore or a supplied diff to review when a separate pass adds
+      questions to explore or a supplied diff to code-review when a separate pass adds
       value. Give each specialist the objective, scope, relevant context and
       required evidence. Batch independent investigations of similar duration.
       Integrate and verify their findings; delegation is not proof of correctness.
@@ -82,7 +83,7 @@
         Do not implement changes or request shell access. Stop once answered.
       '';
     };
-    review = {
+    code-review = {
       mode = "all";
       description = "Read-only review of supplied changes for actionable defects";
       permissions = readOnlyPermissions;
@@ -112,14 +113,14 @@
         No automatic indexing, installers, hooks, MCP or saved answers.
       '';
     };
-    review = {
+    code-review = {
       description = "Review current changes for concrete defects without editing";
       agent = "build";
       template = ''
         Review scope: $ARGUMENTS (default: current working-tree changes).
         Inspect git status and diffs, including staged changes; read relevant
         untracked files only when in scope. Do not edit files or run project code.
-        Supply the relevant diff, objective and context to the review specialist.
+        Supply the relevant diff, objective and context to the code-review specialist.
         Validate its findings against source. Return actionable findings with
         severity, file/line and evidence, then verification gaps. If no defects
         are found, say so. Do not commit or activate changes.
@@ -163,16 +164,37 @@
   };
   launcher = pkgs.writeShellApplication {
     name = "opencode";
-    runtimeInputs = [pkgs.coreutils];
+    runtimeInputs = [pkgs.coreutils pkgs.gnugrep pkgs.privoxy];
     text = ''
       # Parse known options without treating prompt/option values as flags.
       # Unknown/array options conservatively skip scratch; upstream parses argv.
       workspace="$PWD"
       args=("$@")
+      proxy=""
+      proxy_indices=()
+      private_server=0
+      external_server=0
       scratch="''${OPENCODE_WORKSPACE_TMP:-1}"
       mode=""
       for ((i=0; i<''${#args[@]}; i++)); do
         case "''${args[i]}" in
+          --proxy|--proxy=*)
+            if [[ -n "$proxy" ]]; then
+              echo 'opencode: specify --proxy only once.' >&2
+              exit 2
+            fi
+            proxy_indices+=("$i")
+            if [[ "''${args[i]}" == --proxy ]]; then
+              proxy="''${args[i+1]:-}"
+              proxy_indices+=("$((i+1))")
+              i=$((i+1))
+            else
+              proxy="''${args[i]#--proxy=}"
+            fi
+            if [[ -z "$proxy" || "$proxy" == -* ]]; then
+              echo 'opencode: --proxy requires a SOCKS5 HOST:PORT.' >&2
+              exit 2
+            fi ;;
           --)
             if [[ -z "$mode" && -d "''${args[i+1]:-}" ]]; then
               workspace="''${args[i+1]}"
@@ -180,6 +202,9 @@
             break ;;
           --dir) workspace="''${args[i+1]:-$workspace}"; i=$((i+1)) ;;
           --dir=*) workspace="''${args[i]#--dir=}" ;;
+          --standalone) private_server=1 ;;
+          --server) external_server=1; i=$((i+1)) ;;
+          --server=*) external_server=1 ;;
           --attach|--attach=*|--help|--help=*|-h|--version|--version=*|-v) scratch=0 ;;
           --log-level|--port|--hostname|--mdns-domain|--model|-m|--session|-s|--prompt|--agent|--command|--format|--title|--password|-p|--username|-u|--variant|--replay-limit)
             i=$((i+1)) ;;
@@ -197,6 +222,19 @@
             fi ;;
         esac
       done
+      for index in "''${proxy_indices[@]}"; do
+        unset "args[$index]"
+      done
+      set -- "''${args[@]}"
+      if [[ "''${NIXSAMA_OPENCODE_RESEARCH:-}" == 1 ]]; then
+        if ((external_server)); then
+          echo 'opencode-research: --server would bypass research isolation.' >&2
+          exit 2
+        fi
+        if [[ -z "$proxy" ]] && ((!private_server)); then
+          set -- --standalone "$@"
+        fi
+      fi
       if [[ "$scratch" != 0 ]]; then
         workspace="$(realpath -e -- "$workspace")"
         root="$workspace/.opencode-tmp"
@@ -234,20 +272,36 @@
         DEEPSEEK_API_KEY="$(cat -- "$HOME/.deepseek_key")"
         export DEEPSEEK_API_KEY
       fi
+      if [[ -n "$proxy" ]]; then
+        export OPENCODE_PROXY_BIN=${pkgs.opencode}/bin/opencode
+        exec ${pkgs.bash}/bin/bash ${../../opencodeproxy.sh} "$proxy" "$@"
+      fi
       exec ${pkgs.opencode}/bin/opencode "$@"
+    '';
+  };
+  researchLauncher = pkgs.writeShellApplication {
+    name = "opencode-research";
+    text = ''
+      # V2.3 disables both project config and project instruction discovery
+      # with this switch. Never reuse a shared server that did not inherit it.
+      export OPENCODE_CONFIG_PROJECT_DISABLE=1 NIXSAMA_OPENCODE_RESEARCH=1
+      export OPENCODE_CONFIG_DIR="''${XDG_CONFIG_HOME:-$HOME/.config}/opencode-research"
+      unset OPENCODE_CONFIG OPENCODE_CONFIG_CONTENT
+      exec ${launcher}/bin/opencode "$@"
     '';
   };
 in {
   assertions = [
     {
       assertion =
-        lib.versionAtLeast (lib.getVersion pkgs.opencode) "2.1.1"
+        lib.versionAtLeast (lib.getVersion pkgs.opencode) "2.3.0"
         && lib.versionOlder (lib.getVersion pkgs.opencode) "3.0.0";
-      message = "This module targets OpenCode V2 >=2.1.1 and <3.0.0.";
+      message = "This module targets OpenCode V2 >=2.3.0 and <3.0.0.";
     }
   ];
   home.packages = [
     launcher
+    researchLauncher
     pkgs.nixd
     pkgs.alejandra
     pkgs.graphify
@@ -263,38 +317,54 @@ in {
   home.sessionVariables.GRAPHIFY_QUERY_LOG_DISABLE = "1";
 
   # Permissions use ordered arrays, not V1 tool-keyed maps.
-  xdg.configFile."opencode/opencode.jsonc".text = ''
-    {
-      "$schema": "https://opencode.ai/config.json",
-      "model": "openai/${model}",
-      "default_agent": "build",
-      "share": "disabled",
-      "update": "disable",
-      "plugins": [],
-      "formatter": {"nixfmt": {"disabled": true}, "alejandra": {
-        "command": ["${pkgs.alejandra}/bin/alejandra", "$FILE"],
-        "extensions": [".nix"]
-      }},
-      "agents": ${builtins.toJSON agents},
-      "commands": ${builtins.toJSON commands},
-      "providers": {"openai": {"models": {"${model}": {
-        "settings": {"reasoningEffort": "high", "textVerbosity": "low"},
-        "variants": [
-          {"id": "economy", "settings": {"reasoningEffort": "low"}},
-          {"id": "balanced", "settings": {"reasoningEffort": "medium"}},
-          {"id": "deep", "settings": {"reasoningEffort": "high"}}
-        ]
-      }}}},
-      "experimental": {"todo": true},
-      "watcher": {"ignore": ["**/.opencode-tmp/**", "**/graphify-out/**"]},
-      "permissions": ${builtins.toJSON permissions}
-    }
-  '';
-  xdg.configFile."opencode/AGENTS.md".text = builtins.readFile ./instructions.md;
-  xdg.configFile."opencode/skills/nix-validation/SKILL.md".text = builtins.readFile ./nix-validation.md;
-  xdg.configFile."opencode/skills/opencode-config-review/SKILL.md".text = builtins.readFile ./opencode-config-review.md;
-  xdg.configFile."opencode/skills/exact-computation/SKILL.md".text = builtins.readFile ./exact-computation.md;
-  xdg.configFile."opencode/skills/graphify/SKILL.md".text = builtins.readFile ./graphify.md;
+  xdg.configFile = let
+    config = defaultAgent: plugins: ''
+      {
+        "$schema": "https://opencode.ai/config.json",
+        "model": "openai/${model}",
+        "default_agent": "${defaultAgent}",
+        "share": "disabled",
+        "update": "disable",
+            "plugins": ${builtins.toJSON plugins},
+            ${lib.optionalString (defaultAgent == "research") ''"compaction": {"buffer": "30%", "keep": {"tokens": 12000}},''}
+        "formatter": {"nixfmt": {"disabled": true}, "alejandra": {
+          "command": ["${pkgs.alejandra}/bin/alejandra", "$FILE"],
+          "extensions": [".nix"]
+        }},
+        "agents": ${builtins.toJSON agents},
+        "commands": ${builtins.toJSON commands},
+        "providers": {"openai": {"models": {"${model}": {
+          "settings": {"reasoningEffort": "high", "textVerbosity": "low"},
+          "variants": [
+            {"id": "economy", "settings": {"reasoningEffort": "low"}},
+            {"id": "balanced", "settings": {"reasoningEffort": "medium"}},
+            {"id": "deep", "settings": {"reasoningEffort": "high"}}
+          ]
+        }}}},
+        "experimental": {"todo": true},
+        "watcher": {"ignore": ["**/.opencode-tmp/**", "**/graphify-out/**"]},
+        "permissions": ${builtins.toJSON permissions}
+      }
+    '';
+    managed = {
+      "opencode/opencode.jsonc".text = config "build" [];
+      "opencode/AGENTS.md".text = builtins.readFile ./instructions.md + "\n" + builtins.readFile ./nix-workspace-tools.md;
+      "opencode/skills/nix-validation/SKILL.md".text = builtins.readFile ./nix-validation.md;
+      "opencode/skills/opencode-config-review/SKILL.md".text = builtins.readFile ./opencode-config-review.md;
+      "opencode/skills/exact-computation/SKILL.md".text = builtins.readFile ./exact-computation.md;
+      "opencode/skills/graphify/SKILL.md".text = builtins.readFile ./graphify.md;
+    };
+    research = lib.mapAttrs' (name: value:
+      lib.nameValuePair ("opencode-research/" + lib.removePrefix "opencode/" name) value)
+    (lib.filterAttrs (name: _: lib.hasPrefix "opencode/skills/" name) managed);
+  in
+    managed
+    // research
+    // profiles.files
+    // {
+      "opencode-research/opencode.jsonc".text = config "research" [profiles.plugin];
+      "opencode-research/AGENTS.md".text = builtins.readFile ./nix-workspace-tools.md;
+    };
   # Scratch opt-out: OPENCODE_WORKSPACE_TMP=0 opencode
   # V2 has no LSP tools; use targeted lint/typecheck/compiler commands instead.
   # Delete old .opencode-tmp sessions only after processes exit; exclude from backups.

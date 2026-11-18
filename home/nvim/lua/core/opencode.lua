@@ -67,7 +67,7 @@ function M.suggest()
     vim.bo[preview].filetype = ""
     -- Argument array, never a shell string. Keep the installed wrapper and
     -- existing read-only review agent; no credentials or model override here.
-    local job = vim.fn.jobstart({ "opencode", "--agent", "review", "--prompt", prompt }, { term = true, cwd = root })
+    local job = vim.fn.jobstart({ "opencode", "run", "--agent", "code-review", prompt }, { term = true, cwd = root })
     if job > 0 then vim.cmd("startinsert") end
   end, { buffer = preview, desc = "Send reviewed diagnostic context to OpenCode" })
 end

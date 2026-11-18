@@ -1,0 +1,45 @@
+{
+  "_about": "Router and benchmark settings. You are on a subscription, so 'cost' means allowance. weights = how much 1000 tokens of each tier eat from your allowance, relative to each other; luna near zero. cost/latency are priors per attempt, replaced by measured allowance once each startable tier has learned_cost_min_n priced attempts.",
+  "weights": {
+    "luna": 0.05,
+    "terra": 0.3,
+    "sol": 1,
+    "astra": 3
+  },
+  "cache_read_weight": 0.1,
+  "learned_cost_min_n": 5,
+  "cost": {
+    "luna": 1,
+    "terra": 4,
+    "sol": 15,
+    "astra": 60
+  },
+  "latency": {
+    "luna": 2,
+    "terra": 2.5,
+    "sol": 4,
+    "astra": 6
+  },
+  "verify_cost": 1,
+  "verify_latency": 1.5,
+  "rescope_cost": 30,
+  "time_weight": 1,
+  "prior_cap": {
+    "luna": 2,
+    "terra": 3,
+    "sol": 4,
+    "astra": 5
+  },
+  "prior_strength": 2,
+  "explore_min_n": 5,
+  "data_mode": "balanced",
+  "_data_mode": "All modes pair Luna and Terra on first difficulty-5 runs. Lean skips other probes. Balanced/max sample Terra on 60% of eligible difficulty-3/4 Sol starts and use Luna broadly.",
+  "probe_slots": 64,
+  "_probe_luna": "most: a luna probe on nearly every task (luna is almost free); uncertain: only where luna's pass rate for that (type, difficulty) is still unclear; off.",
+  "_cross_checks": "Extra checkers for benchmark data. check_down_rate: chance that a result checked by terra (or sol) is also checked by luna (or terra). check_up_rate: chance of a check one model up (sol over terra; astra over sol, only on P1-P2 work). astra_down_probe: sol re-checks astra's checks on headline (V4) claims, on all P1 ('p1'), or never. Disagreements: luna vs terra -> luna counted wrong, luna_audit_rate of them re-judged by sol; terra vs sol -> astra adjudicates; sol vs astra -> both reconsider with the other's report. max_adjudications per project caps the extra cost.",
+  "concurrency": 200,
+  "_concurrency": "Main slots, separate from probe slots. These are ceilings, not targets: dispatch ready independent work within the run budget. Provider rate limits and local compute limits still apply.",
+  "astra_checks_p1_sol": true,
+  "gate_every": 8,
+  "parallelism_target": 2.5
+}
